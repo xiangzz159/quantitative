@@ -9,7 +9,9 @@ quantitative
 │  ├─db sql文件夹
 │  └─requirements.txt 项目依赖包
 │
-├─job  抓取数据并存储实现类
+├─data 数据存储
+│
+├─job 抓取数据并存储实现类
 │
 ├─strategies 交易策略
 │  
