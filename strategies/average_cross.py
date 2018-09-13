@@ -31,23 +31,21 @@ df['ts'] = pd.to_datetime(df['ts'])
 # print(df.dtypes)
 # print(df.head())
 
-df['MA20'] = np.round(df['Close'].rolling(window=20, center=False).mean(), 2)
-df['MA50'] = np.round(df['Close'].rolling(window=50, center=False).mean(), 2)
+df['MA10'] = np.round(df['Close'].rolling(window=10, center=False).mean(), 2)
+df['MA30'] = np.round(df['Close'].rolling(window=30, center=False).mean(), 2)
 
-df['MA20-MA50'] = df['MA20'] - df['MA50']
+df['MA10-MA30'] = df['MA10'] - df['MA30']
 
-df['Regime'] = np.where(df['MA20-MA50'] > 0, 1, 0)
-df['Regime'] = np.where(df['MA20-MA50'] < 0, -1, df['Regime'])
+df['Regime'] = np.where(df['MA10-MA30'] > 0, 1, 0)
+df['Regime'] = np.where(df['MA10-MA30'] < 0, -1, df['Regime'])
 
 # TODO x轴不为时间轴，需要改进
 # df[['Regime']].plot(ylim=(-2, 2), figsize=(50, 25), grid=True).axhline(y=0, color="black", lw=2)
 
 # 分别计算买入和抛出机会 1：买入， -1：抛出
-
-regime_orig = df.ix[0, "Regime"]
-df.ix[-1, "Regime"] = 0
 df["Signal"] = np.sign(df["Regime"] - df["Regime"].shift(1))
-df.ix[0, "Regime"] = regime_orig
+df.loc[0:0,('Signal')] = 0.0
+
 
 # df['Signal'].plot(ylim = (-2, 2))
 # plt.show()
@@ -73,6 +71,8 @@ df_signals.sort_index(inplace=True)
 # 买入卖出时机
 # print(df_signals)
 
+# print(df_signals.dtypes)
+df_signals[['Price']] = df_signals[['Price']].astype(float)
 df_long_profits = pd.DataFrame({
     "Price": df_signals.loc[(df_signals["Signal"] == "Buy") & df_signals["Regime"] == 1, "Price"],
     "Profit": pd.Series(df_signals["Price"] - df_signals["Price"].shift(1)).loc[
