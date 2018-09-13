@@ -33,7 +33,7 @@ if __name__ == '__main__':
     # 获取2016年到现在4小时BTCK线数据
     try:
         url = 'https://poloniex.com/public?command=returnChartData&currencyPair=USDT_BTC&start=%d&end=%d&period=%d' % (
-            ts['2017'], int(time.time()), period)
+            ts['2016'], int(time.time()), period)
         print('URL: %s' % url)
         openUrl = urllib.request.urlopen(url)
         r = openUrl.read()
@@ -44,7 +44,7 @@ if __name__ == '__main__':
         new_columns = ['Timestamp', 'High', 'Low', 'Open', 'Close', 'Volume', 'QuoteVolume', 'WeighteAverage']
         df = df.loc[:, original_columns]
         df.columns = new_columns
-        fileName = '../data/BTC%s-%s.csv' % ("2017", "now-4H")
+        fileName = '../data/BTC%s-%s.csv' % ("2016", "now-4H")
         df.to_csv(fileName, index=None)
     except BaseException as e:
         print(e)

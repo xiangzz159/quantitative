@@ -13,7 +13,6 @@
 
 '''
 
-import csv
 import datetime
 import matplotlib
 from matplotlib.dates import DateFormatter, WeekdayLocator, \
@@ -23,11 +22,18 @@ import matplotlib.ticker as ticker
 import pandas as pd
 from mpl_finance import candlestick2_ochl
 import time
+import numpy as np
+from tools import data_transform
 
-lines = list(csv.reader(open(r'../data/BTC2017-now-4H.csv')))
-header, values = lines[0], lines[1:]
-data_dict = {h: v for h, v in zip(header, zip(*values))}
-df = pd.DataFrame(data_dict)
+df = data_transform.transform('BTC2016-now-4H.csv')
+
+# Ma5, MA20, MA50, MA200 均线
+df['MA5'] = np.round(df['Close'].rolling(window=5, center=False).mean(), 2)
+df['MA20'] = np.round(df['Close'].rolling(window=20, center=False).mean(), 2)
+df['MA50'] = np.round(df['Close'].rolling(window=50, center=False).mean(), 2)
+df['MA200'] = np.round(df['Close'].rolling(window=200, center=False).mean(), 2)
+
+
 
 # print(type(btc))
 # print(btc.head())
@@ -42,6 +48,11 @@ candlestick2_ochl(ax=ax,
                   opens=df["Open"].values, closes=df["Close"].values,
                   highs=df["High"].values, lows=df["Low"].values,
                   width=0.75, colorup='r', colordown='g', alpha=0.75)
+
+# 展示MA5, MA20
+df[['MA5', 'MA20', 'MA50', 'MA200']].plot(figsize=(50, 25), grid=True)
+
+
 
 # x轴坐标数量
 ax.xaxis.set_major_locator(ticker.MaxNLocator(40))
@@ -60,7 +71,7 @@ def mydate_formatter(x, pos):
 
 ax.xaxis.set_major_formatter(ticker.FuncFormatter(mydate_formatter))
 
-ax.yaxis.set_major_locator(ticker.MaxNLocator(20))
+ax.yaxis.set_major_locator(ticker.MaxNLocator(40))
 
 
 plt.setp(plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
@@ -70,5 +81,5 @@ plt.title("BTC 2016-now KLine")
 # 设置y轴坐标范围，解决y轴显示不全问题
 plt.ylim(0, 20000)
 
-plt.savefig("../data/BTC2017-now-4H.png")
+plt.savefig("../data/BTC2016-now-4H.png")
 

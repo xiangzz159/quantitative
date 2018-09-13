@@ -9,7 +9,7 @@ quantitative
 │  ├─db sql文件夹
 │  └─requirements.txt 项目依赖包
 │
-├─data 数据存储
+├─data 存放k线数据及图标等文件
 │
 ├─job 抓取数据并存储实现类
 │
