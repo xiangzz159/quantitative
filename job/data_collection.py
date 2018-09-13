@@ -28,7 +28,7 @@ if __name__ == '__main__':
         '2018': 1514736000,
     }
     t = 31536000
-    period = 7200  # 300, 900, 1800, 7200, 14400, and 86400
+    period = 86400  # 300, 900, 1800, 7200, 14400, and 86400
 
     # 获取2016年到现在4小时BTCK线数据
     try:
@@ -44,7 +44,7 @@ if __name__ == '__main__':
         new_columns = ['Timestamp', 'High', 'Low', 'Open', 'Close', 'Volume', 'QuoteVolume', 'WeighteAverage']
         df = df.loc[:, original_columns]
         df.columns = new_columns
-        fileName = '../data/BTC%s-%s.csv' % ("2016", "now-4H")
+        fileName = '../data/BTC%s-%s.csv' % ("2016", "now-1D")
         df.to_csv(fileName, index=None)
     except BaseException as e:
         print(e)
