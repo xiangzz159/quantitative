@@ -71,7 +71,7 @@ df_signals.sort_index(inplace=True)
 # 买入卖出时机
 # print(df_signals)
 
-# print(df_signals.dtypes)
+# 回测，计算利润
 df_signals[['Price']] = df_signals[['Price']].astype(float)
 df_long_profits = pd.DataFrame({
     "Price": df_signals.loc[(df_signals["Signal"] == "Buy") & df_signals["Regime"] == 1, "Price"],
@@ -84,3 +84,5 @@ df_long_profits = pd.DataFrame({
 })
 # 输出利润
 print(df_long_profits)
+
+

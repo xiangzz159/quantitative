@@ -1,0 +1,13 @@
+DROP TABLE IF EXISTS `k_line`;
+CREATE TABLE `k_line` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `high` DECIMAL(16,8) NOT NULL DEFAULT '0.0' COMMENT '最高价',
+  `low` DECIMAL(16,8) NOT NULL DEFAULT '0.0' COMMENT '最低价',
+  `open` DECIMAL(16,8) NOT NULL DEFAULT '0.0' COMMENT '开盘价',
+  `close` DECIMAL(16,8) NOT NULL DEFAULT '0.0' COMMENT '收盘价',
+  `quote_volume` DECIMAL(16,8) NOT NULL DEFAULT '0.0' COMMENT '报价量',
+  `average` DECIMAL(16,8) NOT NULL DEFAULT '0.0' COMMENT '平均成交价',
+  `timestamp` bigint(20) DEFAULT '0' COMMENT '创建时间',
+  `period` INT(8) NOT NULL DEFAULT '0' COMMENT '时间周期：1800(30m), 7200(2h), 14400(4h)',
+  PRIMARY KEY (`id`),
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8 COMMENT='k线数据';
