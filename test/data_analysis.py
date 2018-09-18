@@ -21,9 +21,9 @@ import matplotlib.ticker as ticker
 import math
 
 df = data2df.csv2df('BTC2016-now-1D.csv')
-df['ts'] = df['Timestamp'].apply(lambda x: time.strftime("%Y--%m--%d", time.localtime(int(x))))
+df['Date'] = df['Timestamp'].apply(lambda x: time.strftime("%Y--%m--%d", time.localtime(int(x))))
 # 转换datetime格式
-df['ts'] = pd.to_datetime(df['ts'])
+df['Date'] = pd.to_datetime(df['Date'])
 df['Close'] = df['Close'].astype(float)
 
 df['5d'] = np.round(df['Close'].rolling(window=5, center=False).mean(), 2)
@@ -48,7 +48,7 @@ ax = df[['Close', 'mov_vol', 'return']].plot(figsize=(20, 10), grid=True, xticks
 # 设置x轴刻度数量
 ax[0].xaxis.set_major_locator(ticker.MaxNLocator(40))
 # 以ts为x轴刻度
-ax[0].set_xticklabels(df.ts)
+ax[0].set_xticklabels(df.Date)
 # 美观x轴刻度
 plt.setp(plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
 plt.show()

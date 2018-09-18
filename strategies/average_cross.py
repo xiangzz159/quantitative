@@ -25,9 +25,9 @@ import matplotlib.ticker as ticker
 import time
 
 df = data2df.csv2df('BTC2016-now-1D.csv')
-df['ts'] = df['Timestamp'].apply(lambda x: time.strftime("%Y--%m--%d", time.localtime(int(x))))
+df['Date'] = df['Timestamp'].apply(lambda x: time.strftime("%Y--%m--%d", time.localtime(int(x))))
 # 转换datetime格式
-df['ts'] = pd.to_datetime(df['ts'])
+df['Date'] = pd.to_datetime(df['Date'])
 # print(df.dtypes)
 # print(df.head())
 
@@ -53,11 +53,11 @@ df.loc[0:0,('Signal')] = 0.0
 # print(df['Signal'].value_counts())
 # print(df.head(100))
 
-# print(df.loc[df['Signal'] == 1, 'ts', 'Close'])
+# print(df.loc[df['Signal'] == 1, 'Date', 'Close'])
 
 # print(df['Signal'].value_counts())
 # print('*' * 50)
-# print(df.loc[df["Signal"] != 0, ['ts', 'Timestamp', 'Close', 'Signal', 'Regime']])
+# print(df.loc[df["Signal"] != 0, ['Date', 'Timestamp', 'Close', 'Signal', 'Regime']])
 
 df_signals = pd.concat([
     pd.DataFrame({"Price": df.loc[df["Signal"] == 1, "Close"],

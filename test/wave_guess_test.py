@@ -20,9 +20,9 @@ from job import wave_guess
 import numpy as np
 
 df = data2df.csv2df('BTC2016-now-1D.csv')
-df['ts'] = df['Timestamp'].apply(lambda x: time.strftime("%Y--%m--%d", time.localtime(int(x))))
+df['Date'] = df['Timestamp'].apply(lambda x: time.strftime("%Y--%m--%d", time.localtime(int(x))))
 # 转换datetime格式
-df['ts'] = pd.to_datetime(df['ts'])
+df['Date'] = pd.to_datetime(df['Date'])
 
 df['ma5'] = np.round(df['Close'].rolling(window=5, center=False).mean(), 2)
 df['v_ma5'] = np.round(df['Volume'].rolling(window=5, center=False).mean(), 2)
