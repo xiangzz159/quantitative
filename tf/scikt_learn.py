@@ -19,9 +19,9 @@ import numpy as np
 from sklearn import datasets, linear_model
 from sklearn.model_selection import train_test_split, cross_val_score
 import time
-from tools import data_transform
+from tools import data2df
 
-stock_X  = data_transform.transform('BTC2016-now-1D.csv')
+stock_X  = data2df.csv2df('BTC2016-now-1D.csv')
 stock_X ['Close'] = stock_X['Close'].astype(float)
 
 

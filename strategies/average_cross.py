@@ -19,12 +19,12 @@
 
 import pandas as pd
 import numpy as np
-from tools import data_transform
+from tools import data2df
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import time
 
-df = data_transform.transform('BTC2016-now-1D.csv')
+df = data2df.csv2df('BTC2016-now-1D.csv')
 df['ts'] = df['Timestamp'].apply(lambda x: time.strftime("%Y--%m--%d", time.localtime(int(x))))
 # 转换datetime格式
 df['ts'] = pd.to_datetime(df['ts'])

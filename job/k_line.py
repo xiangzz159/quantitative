@@ -23,9 +23,9 @@ import pandas as pd
 from mpl_finance import candlestick2_ochl
 import time
 import numpy as np
-from tools import data_transform
+from tools import data2df
 
-df = data_transform.transform('BTC2018-08-15-now-2H.csv')
+df = data2df.csv2df('BTC2018-08-15-now-2H.csv')
 
 # Ma5, MA20, MA50, MA200 均线
 df['MA5'] = np.round(df['Close'].rolling(window=5, center=False).mean(), 2)
