@@ -17,31 +17,26 @@ from stockstats import StockDataFrame
 import pandas as pd
 
 stock = StockDataFrame.retype(pd.read_csv(r'../data/BTC2016-now-1D.csv'))
-stock['volume_delta']
+print(stock['volume_delta'])
 
 # open delta against next 2 day
-stock['open_2_d']
+print(stock['open_2_d'])
 
 # open price change (in percent) between today and the day before yesterday
 # 'r' stands for rate.
-stock['open_-2_r']
+print(stock['open_-2_r'])
 
 # CR indicator, including 5, 10, 20 days moving average
-stock['cr']
-stock['cr-ma1']
-stock['cr-ma2']
-stock['cr-ma3']
+print(stock['cr'], stock['cr-ma1'], stock['cr-ma2'], stock['cr-ma3'])
 
 # volume max of three days ago, yesterday and two days later
-stock['volume_-3,2,-1_max']
+print(stock['volume_-3,2,-1_max'])
 
 # volume min between 3 days ago and tomorrow
-stock['volume_-3~1_min']
+print(stock['volume_-3~1_min'])
 
 # KDJ, default to 9 days
-stock['kdjk']
-stock['kdjd']
-stock['kdjj']
+print(stock['kdjk'], stock['kdjd'], stock['kdjj'])
 
 # three days KDJK cross up 3 days KDJD
 stock['kdj_3_xu_kdjd_3']

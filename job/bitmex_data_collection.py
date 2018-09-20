@@ -24,11 +24,12 @@ def run():
 
     # Instantiating the WS will make it connect. Be sure to add your api_key/api_secret.
     ws = BitMEXWebsocket(endpoint="https://www.bitmex.com/api/v1", symbol="XBTUSD",
-                         api_key=None, api_secret=None)
+                         api_key=None, api_secret=None).ws.run_forever(http_proxy_host='127.0.0.1', http_proxy_port='1080')
 
     logger.info("Instrument data: %s" % ws.get_instrument())
 
     # Run forever
+    ws.ws.run_forever(http_proxy_host='127.0.0.1', http_proxy_port='1080')
     while(ws.ws.sock.connected):
         logger.info("Ticker: %s" % ws.get_ticker())
         if ws.api_key:
