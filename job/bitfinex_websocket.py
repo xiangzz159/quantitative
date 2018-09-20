@@ -18,7 +18,24 @@ import time
 import sys
 import asyncio
 from btfxwss import BtfxWss
+import time
 
+# config
+log = logging.getLogger(__name__)
+fh = logging.FileHandler('../test.log')
+fh.setLevel(logging.DEBUG)
+sh = logging.StreamHandler(sys.stdout)
+sh.setLevel(logging.DEBUG)
+
+log.addHandler(sh)
+log.addHandler(fh)
+logging.basicConfig(level=logging.DEBUG, handlers=[fh, sh])
+
+# 国内设置代理
+wss = BtfxWss(http_proxy_host='127.0.0.1', http_proxy_port='1080')
+
+
+# wss = BtfxWss()
 
 # 订阅websocket
 def subscribe():
@@ -33,67 +50,170 @@ def subscribe():
     wss.subscribe_to_raw_order_book('BTCUSD')
 
 
-def get_order_book():
+async def get_order_book():
     book = wss.books('BTCUSD')
     while not book.empty():
-        print('Order Book: %s' % str(book.get()))
+        re = parse_order_book(book.get())
+        ts = int(re['timestamp'])
+        date = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
+        print('%s: Order Book: %s' % (date, str(re['data'])))
 
 
-def get_candles():
+def parse_order_book(book):
+    list = []
+    ts = book[1]
+    for x in book[0]:
+        if type(x[0]) == type([]):
+            for y in x:
+                list.append({
+                    'PRICE': y[0],
+                    'AMOUNT': y[2]
+                })
+        else:
+            list.append({
+                'PRICE': x[0],
+                'AMOUNT': x[2]
+            })
+
+    return {
+        'data': list,
+        'timestamp': ts
+    }
+
+
+async def get_candles_1h():
     candles_1h = wss.candles('BTCUSD', '1h')
-    # candles_1D = wss.candles('BTCUSD', '1D')
     while not candles_1h.empty():
-        print('1H candles: %s' % str(candles_1h.get()))
-        # print('1D candles: %s' % str(candles_1D.get()))
+        ts = int(time.time())
+        date = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
+        print('%s: 1H candles: %s' % (date, candles_1h.get()))
 
 
-def get_ticker():
+async def get_candles_1D():
+    candles_1D = wss.candles('BTCUSD', '1D')
+    while not candles_1D.empty():
+        ts = int(time.time())
+        date = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
+        print('%s: 1D candles: %s' % (date, candles_1D.get()))
+
+
+async def get_ticker():
     ticker = wss.tickers('BTCUSD')
     while not ticker.empty():
-        print('Ticker: %s' % str(ticker.get()))
+        re = parse_ticker(ticker.get())
+        ts = int(re['timestamp'])
+        date = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
+        print('%s: Ticker: %s' % (date, str(re['data'])))
 
 
-def get_trade():
+def parse_ticker(ticker):
+    list = []
+    ts = ticker[1]
+    for x in ticker[0]:
+        list.append({
+            'BID': x[0],
+            'BID_SIZE': x[1],  # Size of the last highest bid
+            'ASK': x[2],
+            'ASK_SIZE': x[3],
+            'DAILY_CHANGE': x[4],  # Amount that the last price has changed since yesterday
+            'DAILY_CHANGE_PERC': x[5],  # Amount that the price has changed expressed in percentage terms
+            'LAST_PRICE': x[6],
+            'VOLUME': x[7],  # Daily volume
+            'HIGH': x[8],  # Daily high
+            'LOW': x[9]  # Daily low
+        })
+    re = {
+        'data': list,
+        'timestamp': ts
+    }
+    return re
+
+
+async def get_trade():
     trade = wss.trades('BTCUSD')
     while not trade.empty():
-        print('Trade: %s' % str(trade.get()))
+        re = parse_trade(trade.get())
+        ts = int(re['timestamp'])
+        date = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
+        print('%s: Trade: %s' % (date, str(re['data'])))
 
 
-def get_raw_book():
+def parse_trade(trade):
+    list = []
+    ts = trade[1]
+    for i in range(len(trade[0])):
+        x = trade[0][i]
+        if type(x) == type([]):
+            if i == 0:
+                for y in x:
+                    list.append({
+                        'PRICE': y[3],
+                        'AMOUNT': y[2]
+                    })
+            else:
+                list.append({
+                    'PRICE': x[3],
+                    'AMOUNT': x[2]
+                })
+
+    re = {
+        'data': list,
+        'timestamp': ts
+    }
+    return re
+
+# These are the most granular books.
+async def get_raw_book():
     raw_book = wss.raw_books('BTCUSD')
     while not raw_book.empty():
-        print('Raw Book: %s' % str(raw_book.get()))
+        re = parse_raw_book(raw_book.get())
+        ts = int(re['timestamp'])
+        date = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
+        print('%s: Raw Book: %s' % (date, re['data']))
 
 
-if __name__ == '__main__':
-    log = logging.getLogger(__name__)
-    fh = logging.FileHandler('../test.log')
-    fh.setLevel(logging.DEBUG)
-    sh = logging.StreamHandler(sys.stdout)
-    sh.setLevel(logging.DEBUG)
+def parse_raw_book(book):
+    list = []
+    ts = book[1]
+    for x in book[0]:
+        if type(x[0]) == type([]):
+            for y in x:
+                list.append({
+                    'PRICE': y[1],
+                    'AMOUNT': y[2]
+                })
+        else:
+            list.append({
+                'PRICE': x[1],
+                'AMOUNT': x[2]
+            })
 
-    log.addHandler(sh)
-    log.addHandler(fh)
-    logging.basicConfig(level=logging.DEBUG, handlers=[fh, sh])
+    return {
+        'data': list,
+        'timestamp': ts
+    }
 
-    # 国内设置代理
-    wss = BtfxWss(http_proxy_host='127.0.0.1', http_proxy_port='1080')
-    # wss = BtfxWss()
 
+async def print_data():
+    while True:
+        # await get_order_book()
+        await get_raw_book()
+        await get_trade()
+        await get_ticker()
+        # await get_candles_1h()
+        # await get_candles_1D()
+
+
+def main():
     wss.start()
     subscribe()
 
+    loop = asyncio.get_event_loop()
     while wss.conn.connected.is_set():
-        get_order_book()
-        get_raw_book()
-        get_trade()
-        get_ticker()
-        get_candles()
+        loop.run_until_complete(print_data())
         time.sleep(1)
 
     print('Connect Close')
-
-
 
     # Unsubscribing from channels:
     # wss.unsubscribe_from_ticker('BTCUSD')
@@ -101,3 +221,8 @@ if __name__ == '__main__':
 
     # Shutting down the client:
     # wss.stop()
+
+
+if __name__ == '__main__':
+    main()
+
