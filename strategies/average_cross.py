@@ -24,28 +24,27 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import time
 
-df = data2df.csv2df('BTC2016-now-1D.csv')
-df['Date'] = df['Timestamp'].apply(lambda x: time.strftime("%Y--%m--%d", time.localtime(int(x))))
+df = data2df.csv2df('BTC2017.9.1-now-1D.csv')
+df['Date'] = df['Timestamp'].apply(lambda x: time.strftime("%Y-%m-%d", time.localtime(int(x))))
 # 转换datetime格式
 df['Date'] = pd.to_datetime(df['Date'])
 # print(df.dtypes)
 # print(df.head())
 
+df['MA5'] = np.round(df['Close'].rolling(window=5, center=False).mean(), 2)
 df['MA10'] = np.round(df['Close'].rolling(window=10, center=False).mean(), 2)
-df['MA30'] = np.round(df['Close'].rolling(window=30, center=False).mean(), 2)
 
-df['MA10-MA30'] = df['MA10'] - df['MA30']
+df['MA5-MA10'] = df['MA5'] - df['MA10']
 
-df['Regime'] = np.where(df['MA10-MA30'] > 0, 1, 0)
-df['Regime'] = np.where(df['MA10-MA30'] < 0, -1, df['Regime'])
+df['Regime'] = np.where(df['MA5-MA10'] > 0, 1, 0)
+df['Regime'] = np.where(df['MA5-MA10'] < 0, -1, df['Regime'])
 
 # TODO x轴不为时间轴，需要改进
 # df[['Regime']].plot(ylim=(-2, 2), figsize=(50, 25), grid=True).axhline(y=0, color="black", lw=2)
 
 # 分别计算买入和抛出机会 1：买入， -1：抛出
 df["Signal"] = np.sign(df["Regime"] - df["Regime"].shift(1))
-df.loc[0:0,('Signal')] = 0.0
-
+df.loc[0:0, ('Signal')] = 0.0
 
 # df['Signal'].plot(ylim = (-2, 2))
 # plt.show()
@@ -61,9 +60,11 @@ df.loc[0:0,('Signal')] = 0.0
 
 df_signals = pd.concat([
     pd.DataFrame({"Price": df.loc[df["Signal"] == 1, "Close"],
+                  "Date": df.loc[df["Signal"] == 1, "Date"],
                   "Regime": df.loc[df["Signal"] == 1, "Regime"],
                   "Signal": "Buy"}),
     pd.DataFrame({"Price": df.loc[df["Signal"] == -1, "Close"],
+                  "Date": df.loc[df["Signal"] == -1, "Date"],
                   "Regime": df.loc[df["Signal"] == -1, "Regime"],
                   "Signal": "Sell"}),
 ])
@@ -78,11 +79,7 @@ df_long_profits = pd.DataFrame({
     "Profit": pd.Series(df_signals["Price"] - df_signals["Price"].shift(1)).loc[
         df_signals.loc[(df_signals["Signal"].shift(1) == "Buy") & (df_signals["Regime"].shift(1) == 1)].index
     ].tolist(),
-    "End Date": df_signals["Price"].loc[
-        df_signals.loc[(df_signals["Signal"].shift(1) == "Buy") & (df_signals["Regime"].shift(1) == 1)].index
-    ].index
+    "End Date": df_signals.loc[(df_signals["Signal"] == "Buy") & df_signals["Regime"] == 1, "Date"],
 })
 # 输出利润
 print(df_long_profits)
-
-
