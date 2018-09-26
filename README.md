@@ -1,6 +1,6 @@
 # quantitative 量化交易
 
-项目以bitmex数据为准
+项目以poloniex数据为准
 时间周期：30m, 1h, 2h, 4h
 
 **项目结构** 
