@@ -94,6 +94,7 @@ df_signals = pd.concat([long_df_signals, short_df_signals])
 df_signals = df_signals.sort_index()
 
 # 计算本息
+l = []
 for i in range(1, len(df_signals), 2):
     row_ = df_signals.iloc[i - 1]
     row = df_signals.iloc[i]
@@ -115,5 +116,5 @@ ax[0].set_xticklabels(profits.date)
 # 美观x轴刻度
 plt.setp(plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
 plt.title(title)
-plt.savefig('../data/' + title + '.png')
-# plt.show()
+# plt.savefig('../data/' + title + '.png')
+plt.show()
