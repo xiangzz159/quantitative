@@ -38,7 +38,6 @@ df = df[5:]
 
 df['regime'] = np.where((df['cci'] >= 100) & (df['cci'].shift(1) < 100), 1, 0)
 df['regime'] = np.where((df['cci'] <= 100) & (df['cci'].shift(1) > 100), -1, df['regime'])
-
 df['regime'] = np.where((df['cci'] <= -100) & (df['cci'].shift(1) >= -100), -1, df['regime'])
 df['regime'] = np.where((df['cci'] >= -100) & (df['cci'].shift(1) <= -100), 1, df['regime'])
 
