@@ -5,7 +5,9 @@
 推荐使用Anaconda集合包：https://www.anaconda.com/
 
 或者通过下面方式安装项目包：
+
 pip install --upgrade pip
+
 pip install -r requirements.txt
 
 
