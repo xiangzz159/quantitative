@@ -268,7 +268,7 @@ class StockDataFrame(pd.DataFrame):
 
     # noinspection PyUnresolvedReferences
     @classmethod
-    def _get_rsi(cls, df, n_days):
+    def _get_rsi(cls, df, n_days=None):
         """ Calculate the RSI (Relative Strength Index) within N days
 
         calculated based on the formula at:
@@ -790,6 +790,16 @@ class StockDataFrame(pd.DataFrame):
         df[column_name] = df[column].rolling(
             min_periods=1, window=window, center=False).var()
 
+    @classmethod
+    def _get_stochrsi(cls, df):
+        df['stoch_rsi'] = df['rsi_14']
+        lowestlow = pd.Series.rolling(df.stoch_rsi, window=14, center=False).min()
+        highesthigh = pd.Series.rolling(df.stoch_rsi, window=14, center=False).max()
+        K = pd.Series.rolling(100 * ((df.stoch_rsi - lowestlow) / (highesthigh - lowestlow)), window=3).mean()
+        D = pd.Series.rolling(K, window=3).mean()
+        df['stoch_k'] = K
+        df['stoch_d'] = D
+
     @staticmethod
     def parse_column_name(name):
         m = re.match('(.*)_([\d\-\+~,\.]+)_(\w+)', name)
@@ -890,6 +900,8 @@ class StockDataFrame(pd.DataFrame):
             cls._get_vr(df)
         elif key in ['dma']:
             cls._get_dma(df)
+        elif key in ['stoch_rsi']:
+            cls._get_stochrsi(df)
         elif key == 'log-ret':
             cls._get_log_ret(df)
         elif key.endswith('_delta'):

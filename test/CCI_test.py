@@ -23,8 +23,8 @@ import matplotlib.pyplot as plt
 
 # 本金
 principal = 10000.0
-title = 'BTC2017-09-01-now-1D'
-df = data2df.csv2df(title + '.csv')
+filename = 'BTC2017-09-01-now-1D'
+df = data2df.csv2df(filename + '.csv')
 df = df.astype(float)
 df['Timestamp'] = df['Timestamp'].astype(int)
 stock = StockDataFrame.retype(df)
@@ -114,6 +114,6 @@ ax[0].xaxis.set_major_locator(ticker.MaxNLocator(40))
 ax[0].set_xticklabels(profits.date)
 # 美观x轴刻度
 plt.setp(plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
-plt.title(title)
-# plt.savefig('../data/' + title + '.png')
+plt.title(filename)
+# plt.savefig('../data/' + filename + '.png')
 plt.show()

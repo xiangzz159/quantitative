@@ -12,41 +12,34 @@
 @desc:
 
 '''
+# coding: utf-8
 import pandas as pd
-import random
-
-import pandas as pd
-import numpy as np
-from tools.stockstats import StockDataFrame
-from job import poloniex_data_collection
+import numpy as np #computing multidimensionla arrays
+import datetime
 import time
-import matplotlib.ticker as ticker
 from tools import data2df
-import matplotlib.pyplot as plt
+from tools.stockstats import StockDataFrame
 
-
-def Stoch(close, high, low, smoothk, smoothd, n):
-    lowestlow = pd.Series.rolling(low, window=n, center=False).min()
+# StochasticRSI Function
+def Stoch(close,high,low, smoothk, smoothd, n):
+    lowestlow = pd.Series.rolling(low,window=n,center=False).min()
     highesthigh = pd.Series.rolling(high, window=n, center=False).max()
-    rsv = 100 * (close - lowestlow) / (highesthigh - lowestlow)
-    K = pd.Series([50] * len(rsv))
-    K = rsv / 3 + 2 * K.shift(1) / 3
-    D = pd.Series([50] * len(rsv))
-    D = K / 3 + 2 * D.shift(1) / 3
+    K = pd.Series.rolling(100*((close-lowestlow)/(highesthigh-lowestlow)), window=smoothk).mean()
+    D = pd.Series.rolling(K, window=smoothd).mean()
     return K, D
 
 
-df = data2df.csv2df('BTC2018-09-15-now-30M.csv')
+df = data2df.csv2df('BTC2018-09-19-now-30M.csv')
 df = df.astype(float)
 df['Timestamp'] = df['Timestamp'].astype(int)
 stock = StockDataFrame.retype(df)
 df['date'] = df['timestamp'].apply(lambda x: time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(x)))
 df['date'] = pd.to_datetime(df['date'])
 
-stock['rsi_14']
-np_float_data = np.array(df['close'])
-myStochRSI = Stoch(df.close, df.high, df.low, 3, 3, 14)
-df['rsi_k'], df['rsi_d'] = myStochRSI
+# stock['cci']
+stock['stoch_rsi']
 
-# print(df.dtypes)
-print(df[['date', 'rsi_14', 'rsi_k', 'rsi_d']].tail(30))
+# df['stoch_k'], df['stoch_d'] = Stoch(stock.rsi_14, stock.rsi_14, stock.rsi_14, 3, 3, 14)
+
+print(df.dtypes)
+print(df[['date', 'close', 'stoch_  rsi', 'stoch_k', 'stoch_d']].tail(50))

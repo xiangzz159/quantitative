@@ -52,8 +52,6 @@ def get_poloniex_kline(symbol, begin, end, period):
         df = df.loc[:, original_columns]
         df.columns = new_columns
         return df
-        fileName = '../data/BTC%s-%s.csv' % ("2017.9.1", "now-30M")
-        df.to_csv(fileName, index=None)
     except BaseException as e:
         print(e)
 
@@ -66,12 +64,12 @@ if __name__ == '__main__':
     }
     # 一年时间戳
     t = 31536000
-    period = 1800  # 300, 900, 1800, 7200, 14400, and 86400
+    period = 14400  # 300, 900, 1800, 7200, 14400, and 86400
 
     end = int(time.time())
-    begin = end - 1800 * 500
+    begin = 1504224000
 
     date = time.strftime("%Y-%m-%d", time.localtime(begin))
     df = get_poloniex_kline('USDT_BTC', begin, end, period)
-    fileName = '../data/BTC%s-%s.csv' % (date, "now-30M")
+    fileName = '../data/BTC%s-%s.csv' % (date, "now-4H")
     df.to_csv(fileName, index=None)
