@@ -67,7 +67,7 @@ if __name__ == '__main__':
     period = 14400  # 300, 900, 1800, 7200, 14400, and 86400
 
     end = int(time.time())
-    begin = 1504224000
+    begin = 1514736000
 
     date = time.strftime("%Y-%m-%d", time.localtime(begin))
     df = get_poloniex_kline('USDT_BTC', begin, end, period)

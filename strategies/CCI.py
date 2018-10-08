@@ -37,9 +37,9 @@ def analysis(k):
     df['date'] = pd.to_datetime(df['date'])
     df = df[5:]
     df['regime'] = np.where((df['cci'] >= 100) & (df['cci'].shift(1) < 100), 1, 0)
-    df['regime'] = np.where((df['cci'] <= 100) & (df['cci'].shift(1) > 100), -1, df['regime'])
+    df['regime'] = np.where(((df['cci'] <= 100) & (df['cci'].shift(1) > 100)) | ((df['cci'] >= 100) & (df['stoch_d'] >= df['stoch_k'])), -1, df['regime'])
     # df['regime'] = np.where((df['cci'] <= -100) & (df['cci'].shift(1) >= -100), -1, df['regime'])
-    # df['regime'] = np.where((df['cci'] >= -100) & (df['cci'].shift(1) <= -100), 1, df['regime'])
+    # df['regime'] = np.where(((df['cci'] >= -100) & (df['cci'].shift(1) <= -100)) | ((df['cci'] <= -100) & (df['stoch_k'] >= df['stoch_d'])), 1, df['regime'])
     # 下单(只下多单)
     print(df[['date', 'close', 'cci', 'regime']])
     if (df[-1:]['regime'] == 1).bool():
