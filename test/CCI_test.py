@@ -37,81 +37,49 @@ stock['stoch_rsi']
 # 去掉前几个cci指标不准数据
 df = df[5:]
 
-df['regime'] = np.where((df['cci'] >= 100) & (df['cci'].shift(1) < 100), 1, 0)
-df['regime'] = np.where(((df['cci'] <= 100) & (df['cci'].shift(1) > 100)) | ((df['cci'] >= 100) & (df['stoch_d'] >= df['stoch_k'])), -1, df['regime'])
-df['regime'] = np.where((df['cci'] <= -100) & (df['cci'].shift(1) >= -100), -1, df['regime'])
-df['regime'] = np.where(((df['cci'] >= -100) & (df['cci'].shift(1) <= -100)) | ((df['cci'] <= -100) & df['stoch_k'] > df['stoch_d']), 1, df['regime'])
-
-df_regime = df.loc[df['regime'] != 0]
-
-# 数据清理
-l = []
-for index, row in df_regime.iterrows():
-    if row['regime'] == 1 and row['cci'] >= 100:
-        l.append([row['date'], row['close'], row['open'], row['high'], row['low'], row['cci'], row['regime'], 'long', 'long'])
-    elif row['regime'] == -1 and (row['cci'] <= 100 and row['cci'] > -100):
-        l.append([row['date'], row['close'], row['open'], row['high'], row['low'], row['cci'], row['regime'], 'close_long', 'long'])
-    elif row['regime'] == -1 and row['cci'] <= -100:
-        l.append([row['date'], row['close'], row['open'], row['high'], row['low'], row['cci'], row['regime'], 'short', 'short'])
-    elif row['regime'] == 1 and (row['cci'] >= -100 and row['cci'] < 100):
-        l.append([row['date'], row['close'], row['open'], row['high'], row['low'], row['cci'], row['regime'], 'close_short', 'short'])
-
-df_signals = pd.DataFrame(l, columns=['date', 'close', 'open', 'high', 'low', 'cci', 'regime', 'signal', 'type'])
+df['regime'] = np.where((df['cci'] >= 95) & (df['cci'].shift(1) < 95), 'long', 'wait')
+df['regime'] = np.where(
+    ((df['cci'] <= 95) & (df['cci'].shift(1) > 95)),
+    'close_long', df['regime'])
+df['regime'] = np.where((df['cci'] <= -95) & (df['cci'].shift(1) >= -95), 'short', df['regime'])
+df['regime'] = np.where((df['cci'] >= -95) & (df['cci'].shift(1) <= -95),
+                        'close_short', df['regime'])
 
 
-# 做多
-long_df_signals = df_signals.loc[df_signals['type'] == 'long']
-# 过滤两个做多/平多并列行
-long_df_useless = long_df_signals.loc[
-    ((long_df_signals['signal'] == 'long') & (long_df_signals['signal'].shift(-1) == 'long')) | (
-            (long_df_signals['signal'] == 'close_long') & (long_df_signals['signal'].shift(1) == 'close_long'))]
-for index, row in long_df_useless.iterrows():
-    long_df_signals = long_df_signals.drop([index])
+df_regime = df.loc[df['regime'] != 'wait']
+# 逆序
+df_regime = df_regime[::-1]
+unless_regime = df_regime.loc[
+    ((df_regime['regime'] == 'close_short') & (df_regime['regime'].shift(1) == 'close_short')) | (
+            (df_regime['regime'] == 'close_long') & (df_regime['regime'].shift(1) == 'close_long')) | (
+                (df_regime['regime'] == 'close_short') & (df_regime['regime'].shift(1) == 'close_long')) | (
+                (df_regime['regime'] == 'close_long') & (df_regime['regime'].shift(1) == 'close_short'))]
 
-# 过滤第一行为平多，最后一行为做多数据
-if (long_df_signals[:1]['signal'] == 'close_long').bool():
-    long_df_signals = long_df_signals[1:]
-if (long_df_signals[-1:]['signal'] == 'long').bool():
-    long_df_signals = long_df_signals[:len(long_df_signals) - 1]
+for index, row in unless_regime.iterrows():
+    df_regime = df_regime.drop([index])
+df_regime = df_regime[::-1]
+if (df_regime[:1]['regime'] == 'close_long').bool() or (df_regime[:1]['regime'] == 'close_short').bool():
+    df_regime = df_regime[1:]
+if (df_regime[-1:]['regime'] == 'long').bool() or (df_regime[-1:]['regime'] == 'short').bool():
+    df_regime = df_regime[:len(df_regime) - 1]
 
-# 做空
-short_df_signals = df_signals.loc[df_signals['type'] == 'short']
-
-# 过滤两个做空/平空并列行
-short_df_useless = short_df_signals.loc[
-    ((short_df_signals['signal'] == 'short') & (short_df_signals['signal'].shift(-1) == 'short')) | (
-            (short_df_signals['signal'] == 'close_short') & (short_df_signals['signal'].shift(1) == 'close_short'))]
-for index, row in short_df_useless.iterrows():
-    short_df_signals = short_df_signals.drop([index])
-
-# 过滤第一行为平空，最后一行为做空数据
-if (short_df_signals[:1]['signal'] == 'close_short').bool():
-    short_df_signals = short_df_signals[1:]
-if (short_df_signals[-1:]['signal'] == 'short').bool():
-    short_df_signals = short_df_signals[:len(short_df_signals) - 1]
-
-# 数据合并
-df_signals = pd.concat([long_df_signals, short_df_signals])
-df_signals = df_signals.sort_index()
-
-df_signals[['date', 'close', 'signal', 'type']].to_csv('../data/df.csv', index=None)
-
+# print(df_regime[['date', 'close', 'regime']].tail(50))
 # 计算本息
 l = []
-for i in range(1, len(df_signals), 2):
-    row_ = df_signals.iloc[i - 1]
-    row = df_signals.iloc[i]
-    if row['type'] == 'long' and row_['type'] == 'long':
+for i in range(1, len(df_regime), 2):
+    row_ = df_regime.iloc[i - 1]
+    row = df_regime.iloc[i]
+    if row['regime'] == 'close_long' and row_['regime'] == 'long':
         principal = principal * row['close'] / row_['close']
         l.append([row['date'], row['close'], principal, 'long', 1])
-    elif row['type'] == 'short' and row_['type'] == 'short':
+    elif row['regime'] == 'close_short' and row_['regime'] == 'short':
         principal = principal * row_['close'] / row['close']
         l.append([row['date'], row['close'], principal, 'short', -1])
 profits = pd.DataFrame(l, columns=['date', 'close', 'principal', 'type', 's'])
-profits.to_csv('../data/profits.csv', index=None)
 # print(profits)
 
-ax = profits[['close', 'principal']].plot(figsize=(20, 10), grid=True, xticks=profits.index, rot=90, subplots=True, style='b')
+ax = profits[['close', 'principal']].plot(figsize=(20, 10), grid=True, xticks=profits.index, rot=90, subplots=True,
+                                          style='b')
 
 # 设置x轴刻度数量
 ax[0].xaxis.set_major_locator(ticker.MaxNLocator(40))
