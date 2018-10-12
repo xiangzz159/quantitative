@@ -611,6 +611,10 @@ class StockDataFrame(pd.DataFrame):
         df['middle'] = (df['close'] + df['high'] + df['low']) / 3.0
 
     @classmethod
+    def _get_middle_hl(cls, df):
+        df['middle_hl'] = (df['high'] + df['low']) / 2.0
+
+    @classmethod
     def _calc_kd(cls, column):
         param0, param1 = cls.KDJ_PARAM
         k = 50.0
@@ -876,6 +880,8 @@ class StockDataFrame(pd.DataFrame):
             cls._get_rate(df)
         elif key == 'middle':
             cls._get_middle(df)
+        elif key == 'middle_hl':
+            cls._get_middle_hl(df)
         elif key in ['boll', 'boll_ub', 'boll_lb']:
             cls._get_boll(df)
         elif key in ['macd', 'macds', 'macdh']:

@@ -35,7 +35,8 @@ stock['stoch_rsi']
 # 去掉前几个指标不准数据
 df = df[5:]
 
-df['kkdd'] = df['stoch_k'] - df['stoch_k'].shift(1) + df['stoch_d'].shift(1) - df['stoch_d']
-df['dk'] = df['stoch_d'] - df['stoch_k']
-
-print(df[['date', 'cci', 'dk', 'kkdd']].loc[(df['cci'] > 80) & (df['timestamp'] >= 1531584000) & (df['timestamp'] <= 1532505600)])
+print(df[['date', 'stoch_d', 'stoch_k', 'stoch_rsi']])
+# df['kkdd'] = df['stoch_k'] - df['stoch_k'].shift(1) + df['stoch_d'].shift(1) - df['stoch_d']
+# df['dk'] = df['stoch_d'] - df['stoch_k']
+#
+# print(df[['date', 'cci', 'dk', 'kkdd']].loc[(df['cci'] > 80) & (df['timestamp'] >= 1531584000) & (df['timestamp'] <= 1532505600)])

@@ -8,3 +8,4 @@ redis==2.10.6
 stockstats==0.2.0
 websocket-client==0.46.0
 websockets==6.0
+mpl-finance==0.10.0
