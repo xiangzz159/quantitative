@@ -18,10 +18,8 @@ import numpy as np
 from tools import data2df
 import time
 from tools.stockstats import StockDataFrame
-import matplotlib as mpl
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
-import mpl_finance as mpf
 
 filename = 'BTC2018-01-01-now-4H'
 k_data = data2df.csv2df(filename + '.csv')
@@ -108,12 +106,13 @@ for i, row in after_fenxing.iterrows():
 temp_num = 0    # 上一个顶或底的位置
 temp_high = 0   # 上一个顶的high值
 temp_low = 0    # 上一个底的low值
-temp_type = 0   # 上一个记录位置的类型
+temp_type = 0   # 上一个记录位置的类型 1-顶分型， 2-底分型
 i = 1
 fenxing_type = []   # 记录分型点的类型，1为顶分型，-1为底分型
 fenxing_time = []   # 记录分型点的时间
 fenxing_plot = []   # 记录点的数值，为顶分型去high值，为底分型去low值
 fenxing_data = pd.DataFrame()   # 分型点的DataFrame值
+interval = 4
 while (i < len(after_fenxing) - 1):
     # 顶分型
     case1 = after_fenxing.high[i-1] < after_fenxing.high[i] and after_fenxing.high[i] > after_fenxing.high[i + 1]
@@ -129,7 +128,7 @@ while (i < len(after_fenxing) - 1):
                 temp_high = after_fenxing.high[i]
                 temp_num = i
                 temp_type = 1
-                i += 4
+                i += interval
         # 如果上一个分型为底分型，则记录上一个分型，用当前分型与后面的分型比较，选取通向更极端的分型
         elif temp_type == 2:
             if temp_low >= after_fenxing.high[i]:
@@ -142,12 +141,12 @@ while (i < len(after_fenxing) - 1):
                 temp_high = after_fenxing.high[i]
                 temp_num = i
                 temp_type = 1
-                i += 4
+                i += interval
         else:
             temp_high = after_fenxing.high[i]
             temp_num = i
             temp_type = 1
-            i += 4
+            i += interval
     elif case2:
         # 如果上一个分型为底分型，则进行比较，选取低点更低的分型
         if temp_type == 2:
@@ -158,7 +157,7 @@ while (i < len(after_fenxing) - 1):
                 temp_low = after_fenxing.low[i]
                 temp_num = i
                 temp_type = 2
-                i += 4
+                i += interval
         # 如果上一个分型为顶分型，则记录上一个分型，用当前分型与后面的分型比较，选取通向更极端的分型
         elif temp_type == 1:
             # 如果上一个顶分型的底比当前底分型的底低，则跳过当前的底分型
@@ -172,12 +171,12 @@ while (i < len(after_fenxing) - 1):
                 temp_low = after_fenxing.low[i]
                 temp_num = i
                 temp_type = 2
-                i += 4
+                i += interval
         else:
             temp_low = after_fenxing.low[i]
             temp_num = i
             temp_type = 2
-            i += 4
+            i += interval
     else:
         i += 1
 
@@ -187,8 +186,16 @@ print(len(fenxing_time), fenxing_time)
 print('*' * 50)
 print(len(fenxing_plot), fenxing_plot)
 print('*' * 50)
-print(len(fenxing_data), fenxing_data[['date', 'open', 'close', 'high', 'low']])
+print(len(fenxing_data), fenxing_data[['date', 'timestamp', 'open', 'close', 'high', 'low']])
 print('*' * 50)
+
+ding_fenxing = []
+for i in range(len(fenxing_type)):
+    if fenxing_type[i] == 1:
+        ding_fenxing.append(fenxing_plot[i])
+print(len(ding_fenxing), ding_fenxing)
+print('*' * 50)
+
 
 # 画出k线
 fig, ax = plt.subplots(figsize=(20, 10))
