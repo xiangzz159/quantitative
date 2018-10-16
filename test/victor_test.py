@@ -21,7 +21,7 @@ from tools.stockstats import StockDataFrame
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 
-filename = 'BTC2018-01-01-now-4H'
+filename = 'BTC2017-09-01-now-1H'
 k_data = data2df.csv2df(filename + '.csv')
 k_data = k_data.astype(float)
 k_data['Timestamp'] = k_data['Timestamp'].astype(int)
@@ -207,9 +207,5 @@ plt.plot(fenxing_plot,'k', lw=1)
 plt.plot(fenxing_plot,'o')
 plt.grid(True)
 plt.setp(plt.gca().get_xticklabels(), rotation=30)
-plt.show()
-
-
-
-
-
+# plt.show()
+plt.savefig('../data/victor_1H.png')

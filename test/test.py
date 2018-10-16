@@ -21,22 +21,28 @@ import time
 from tools import data2df
 from tools.stockstats import StockDataFrame
 
-filename = 'BTC2017-09-01-now-4H'
+filename = 'BTC2017-09-01-now-30M'
 df = data2df.csv2df(filename + '.csv')
 df = df.astype(float)
 df['Timestamp'] = df['Timestamp'].astype(int)
-stock = StockDataFrame.retype(df)
 
-df['date'] = df['timestamp'].apply(lambda x: time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(x)))
-df['date'] = pd.to_datetime(df['date'])
+if df['Timestamp'][0] % 3600 != 0:
+    df = df[1:]
 
-stock['cci']
-stock['stoch_rsi']
-# 去掉前几个指标不准数据
-df = df[5:]
+l = len(df) - len(df) % 2
+ll = []
+for i in range(1, l, 2):
+    row_ = df.iloc[i - 1]
+    row = df.iloc[i]
+    timestamp = row_['Timestamp']
+    open = row_['Open']
+    close = row_['Close']
+    high = max(row_['High'], row['High'])
+    low = min(row_['Low'], row['Low'])
+    vol = row_['Volume'] + row['Volume']
+    adj =(row_['Adj Close'] + row['Adj Close']) / 2
+    ll.append([timestamp, high, low, open, close, vol, adj])
 
-print(df[['date', 'stoch_d', 'stoch_k', 'stoch_rsi']])
-# df['kkdd'] = df['stoch_k'] - df['stoch_k'].shift(1) + df['stoch_d'].shift(1) - df['stoch_d']
-# df['dk'] = df['stoch_d'] - df['stoch_k']
-#
-# print(df[['date', 'cci', 'dk', 'kkdd']].loc[(df['cci'] > 80) & (df['timestamp'] >= 1531584000) & (df['timestamp'] <= 1532505600)])
+new_df = pd.DataFrame(ll, columns=['Timestamp','High','Low','Open','Close','Volume','Adj Close'])
+fileName = '../data/BTC2017-09-01-now-1H.csv'
+new_df.to_csv(fileName, index=None)
