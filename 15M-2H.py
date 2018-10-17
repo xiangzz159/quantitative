@@ -40,7 +40,12 @@ ll = []
 async def is_true(df, compare_df, compare_time):
     for index, row in df.loc[df['rsi_regime'] == 1].iterrows():
         t = row['timestamp'] - row['timestamp'] % compare_time - compare_time
-        compare_row = compare_df.loc[compare_df['timestamp'] == t].iloc[0]
+        compare_row = compare_df.loc[compare_df['timestamp'] == t]
+        if len(compare_row) > 0:
+            compare_row = compare_row.iloc[0]
+        else:
+            df['rsi_regime'][index] = 0
+            continue
         if compare_row['cci'] < compare_cci and compare_row['cci'] > -1 * compare_cci:
             continue
         else:
@@ -102,7 +107,7 @@ async def analysis(df, compare_df, dk, d, cci, rsi, compare_cci, compare_time, f
 begin = int(time.time())
 loop = asyncio.get_event_loop()
 
-f1, f2 = '15M', '30M'
+f1, f2 = '15M', '2H'
 filename = 'BTC2017-09-01-now-' + f1
 compare_filename = 'BTC2017-09-01-now-' + f2
 compare_time = tt[f2]
@@ -145,14 +150,4 @@ result = pd.DataFrame(ll,
                                'last_principal', 'f'])
 result = result.loc[(result['shooting'] > 0.5) & (result['total_times'] > 50) & (result['last_principal'] > 10000) & (result['min_principal'] > 9000)]
 
-result.to_csv('../data/result' + f1 + '-' + f2 + '.csv', index=None)
-
-# by_total_times = result.sort_values(by='total_times', ascending=False)
-# print('*' * 20 + 'sort by total times' + '*' * 20)
-# print(by_total_times[:10][['dk', 'd', 'cci', 'rsi', 'compare_cci', 'total_times']])
-# by_shooting = result.sort_values(by='shooting', ascending=False)
-# print('*' * 20 + 'sort by shooting' + '*' * 20)
-# print(by_shooting[:10][['dk', 'd', 'cci', 'rsi', 'compare_cci', 'shooting']])
-# by_min_principal = result.sort_values(by='min_principal', ascending=False)
-# print('*' * 20 + 'sort by min principal' + '*' * 20)
-# print(by_min_principal[:10][['dk', 'd', 'cci', 'rsi', 'compare_cci', 'min_principal']])
+result.to_csv('result-' + f1 + '-' + f2 + '.csv', index=None)

@@ -16,7 +16,7 @@ import pandas as pd
 import csv
 
 def csv2df(filename):
-    lines = list(csv.reader(open(r'../data/' + filename)))
+    lines = list(csv.reader(open(r'./data/' + filename)))
     header, values = lines[0], lines[1:]
     data_dict = {h: v for h, v in zip(header, zip(*values))}
     return pd.DataFrame(data_dict)

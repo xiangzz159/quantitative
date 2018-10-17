@@ -145,14 +145,4 @@ result = pd.DataFrame(ll,
                                'last_principal', 'f'])
 result = result.loc[(result['shooting'] > 0.5) & (result['total_times'] > 50) & (result['last_principal'] > 10000) & (result['min_principal'] > 9000)]
 
-result.to_csv('../data/result' + f1 + '-' + f2 + '.csv', index=None)
-
-# by_total_times = result.sort_values(by='total_times', ascending=False)
-# print('*' * 20 + 'sort by total times' + '*' * 20)
-# print(by_total_times[:10][['dk', 'd', 'cci', 'rsi', 'compare_cci', 'total_times']])
-# by_shooting = result.sort_values(by='shooting', ascending=False)
-# print('*' * 20 + 'sort by shooting' + '*' * 20)
-# print(by_shooting[:10][['dk', 'd', 'cci', 'rsi', 'compare_cci', 'shooting']])
-# by_min_principal = result.sort_values(by='min_principal', ascending=False)
-# print('*' * 20 + 'sort by min principal' + '*' * 20)
-# print(by_min_principal[:10][['dk', 'd', 'cci', 'rsi', 'compare_cci', 'min_principal']])
+result.to_csv('result-' + f1 + '-' + f2 + '.csv', index=None)
