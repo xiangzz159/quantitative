@@ -1,4 +1,4 @@
-#！/usr/bin/env python
+# ！/usr/bin/env python
 # _*_ coding:utf-8 _*_
 
 '''
@@ -21,10 +21,13 @@ import ccxt
 from tools import public_tools
 
 # 参数
-dk,d,cci,rsi,compare_cci = 0,15,-85,20,80
+dk, d, cci, rsi, compare_cci = 0, 15, -85, 20, 80
 dk_, d_, cci_, rsi_ = 0, 85, 85, 80
 
-ex = ccxt.bitmex()
+ex = ccxt.bitmex({
+    'timeout': 60000
+})
+
 
 def is_true(df, compare_df, compare_time):
     for index, row in df.loc[df['regime'] == 1].iterrows():
@@ -35,6 +38,7 @@ def is_true(df, compare_df, compare_time):
         else:
             df['regime'][index] = 'wait'
     return df
+
 
 def anyasis(k, compare_k, compare_time):
     df = pd.DataFrame(k, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
@@ -73,12 +77,12 @@ def anyasis(k, compare_k, compare_time):
                 df['stoch_k'] - df['stoch_k'].shift(1) + df['stoch_d'].shift(1) - df['stoch_d'] > dk_) & (
                 df['stoch_rsi'] > rsi_) & (
                 df['cci'] > cci_), 'short', 'wait')
-    
+
     df = is_true(df, compare_df, compare_time)
 
     df['regime'] = np.where(df['regime'].shift(1) == 'long', 'close_long', df['regime'])
     df['regime'] = np.where(df['regime'].shift(1) == 'short', 'close_short', df['regime'])
-    
+
     re = df.iloc[-1]
 
     if re['regime'] != 'wait':
@@ -102,11 +106,3 @@ if __name__ == '__main__':
     while True:
         run()
         time.sleep(60 * 30)
-
-
-
-
-
-
-
-

@@ -24,7 +24,9 @@ from tools import public_tools
 dk,d,cci,rsi,compare_cci = 0,15,-85,20,80
 dk_, d_, cci_, rsi_ = 0, 85, 85, 80
 
-ex = ccxt.bitmex()
+ex = ccxt.bitmex({
+    'timeout': 60000
+})
 
 def is_true(df, compare_df, compare_time):
     for index, row in df.loc[df['regime'] == 1].iterrows():
