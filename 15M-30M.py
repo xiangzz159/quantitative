@@ -126,14 +126,14 @@ df_ = df_[5:]
 compare_df_ = compare_df_[5:]
 for dk in range(-5, 5):
     for d in range(10, 20):
-        as_list = []
         for cci in range(-95, -80):
             for rsi in (5, 30):
+                as_list = []
                 for compare_cci in range(50, 95):
                     df = copy.deepcopy(df_)
                     compare_df = copy.deepcopy(compare_df_)
                     as_list.append(analysis(df, compare_df, dk, d, cci, rsi, compare_cci, compare_time, f1, f2))
-        asyncio.get_event_loop().run_until_complete(asyncio.gather(*as_list))
+                asyncio.get_event_loop().run_until_complete(asyncio.gather(*as_list))
 
 result = pd.DataFrame(ll,
                       columns=['dk', 'd', 'cci', 'rsi', 'compare_cci', 'min_principal', 'max_principal', 'total_times',
