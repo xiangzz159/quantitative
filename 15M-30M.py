@@ -39,6 +39,7 @@ async def is_true(df, compare_df, compare_time):
     for index, row in df.loc[df['rsi_regime'] == 1].iterrows():
         t = row['timestamp'] - row['timestamp'] % compare_time - compare_time
         compare_row = compare_df.loc[compare_df['timestamp'] == t].iloc[0]
+        # 超过这个区间就不操作
         if compare_row['cci'] < compare_cci and compare_row['cci'] > -1 * compare_cci:
             continue
         else:
