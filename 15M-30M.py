@@ -20,12 +20,10 @@
 import pandas as pd
 import numpy as np
 from tools.stockstats import StockDataFrame
-import time
-import matplotlib.ticker as ticker
 from tools import data2df
-import matplotlib.pyplot as plt
 import copy
 import asyncio
+import time
 
 tt = {
     '30M': 1800,
@@ -99,7 +97,6 @@ async def analysis(df, compare_df, dk, d, cci, rsi, compare_cci, compare_time, f
          f1 + '-' + f2])
 
 
-begin = int(time.time())
 loop = asyncio.get_event_loop()
 
 f1, f2 = '15M', '30M'
@@ -127,22 +124,21 @@ compare_stock['stoch_rsi']
 # 去掉前几个指标不准数据H
 df_ = df_[5:]
 compare_df_ = compare_df_[5:]
-for dk in range(-15, 30, 5):
-    for d in range(15, 50, 5):
+for dk in range(-5, 5):
+    for d in range(10, 20):
         as_list = []
-        for cci in range(-100, -80, 5):
-            for rsi in (20, 50, 5):
-                for compare_cci in range(50, 95, 5):
+        for cci in range(-95, -80):
+            for rsi in (5, 30):
+                for compare_cci in range(50, 95):
                     df = copy.deepcopy(df_)
                     compare_df = copy.deepcopy(compare_df_)
                     as_list.append(analysis(df, compare_df, dk, d, cci, rsi, compare_cci, compare_time, f1, f2))
         asyncio.get_event_loop().run_until_complete(asyncio.gather(*as_list))
 
-print('The end, use % d seconds' % int(time.time()) - begin)
 result = pd.DataFrame(ll,
                       columns=['dk', 'd', 'cci', 'rsi', 'compare_cci', 'min_principal', 'max_principal', 'total_times',
                                'shooting',
                                'last_principal', 'f'])
-result = result.loc[(result['shooting'] > 0.5) & (result['total_times'] > 50) & (result['last_principal'] > 10000) & (result['min_principal'] > 9000)]
-
-result.to_csv('result-' + f1 + '-' + f2 + '.csv', index=None)
+result = result.sort_values(by=['shooting', 'min_principal', 'total_times', 'last_principal', 'max_principal'],
+                     ascending=(False, False, False, False, False))
+result[:200].to_csv('result-' + f1 + '-' + f2 + '.csv', index=None)
