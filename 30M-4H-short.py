@@ -56,13 +56,13 @@ async def is_true(df, compare_df, compare_time):
 async def analysis(df, compare_df, dk, d, cci, rsi, compare_cci, compare_time, f1, f2):
     # 做多时机
     df['rsi_regime'] = np.where(
-        (df['stoch_k'] - df['stoch_k'].shift(1) + df['stoch_d'].shift(1) - df['stoch_d'] > dk) & (
-                df['stoch_d'] < d) & (
-                df['cci'] < cci) | (
-                df['stoch_k'] - df['stoch_k'].shift(1) + df['stoch_d'].shift(1) - df['stoch_d'] > dk) & (
-                df['stoch_rsi'] < rsi) & (
-                df['cci'] < cci), 1, 0)
-
+        (df['stoch_k'] - df['stoch_k'].shift(1) + df['stoch_d'].shift(1) - df['stoch_d'] < dk) & (
+                df['stoch_d'] > d) & (
+                df['cci'] > cci) | (
+                df['stoch_k'] - df['stoch_k'].shift(1) + df['stoch_d'].shift(1) - df['stoch_d'] < dk) & (
+                df['stoch_rsi'] > rsi) & (
+                df['cci'] > cci), 1, 0)
+    # 判断是否在震荡区间内
     df = await is_true(df, compare_df, compare_time)
 
     df['rsi_regime'] = np.where(df['rsi_regime'].shift(1) == 1, -1, df['rsi_regime'])
@@ -86,13 +86,13 @@ async def analysis(df, compare_df, dk, d, cci, rsi, compare_cci, compare_time, f
     for i in range(1, len(rsi_df), 2):
         row_ = rsi_df.iloc[i - 1]
         row = rsi_df.iloc[i]
-        buy_price = row_['close']
-        sell_price = row['close']
+        buy_price = row['close']
+        sell_price = row_['close']
         principal = principal * sell_price / buy_price
 
         max_principal = max(max_principal, principal)
         min_principal = min(min_principal, principal)
-        if sell_price > buy_price:
+        if sell_price < buy_price:
             true_times += 1
 
     print(dk, d, cci, rsi, compare_cci, min_principal, max_principal, total_times, true_times / total_times,
@@ -107,7 +107,7 @@ async def analysis(df, compare_df, dk, d, cci, rsi, compare_cci, compare_time, f
 begin = int(time.time())
 loop = asyncio.get_event_loop()
 
-f1, f2 = '30M', '1H'
+f1, f2 = '30M', '4H'
 filename = 'BTC2017-09-01-now-' + f1
 compare_filename = 'BTC2017-09-01-now-' + f2
 compare_time = tt[f2]
@@ -133,10 +133,10 @@ compare_stock['stoch_rsi']
 df_ = df_[5:]
 compare_df_ = compare_df_[5:]
 for dk in range(-15, 30, 5):
-    for d in range(15, 50, 5):
+    for d in range(75, 100, 5):
         as_list = []
-        for cci in range(-100, -80, 5):
-            for rsi in (20, 50, 5):
+        for cci in range(80, 100, 5):
+            for rsi in (75, 100, 5):
                 for compare_cci in range(50, 95, 5):
                     df = copy.deepcopy(df_)
                     compare_df = copy.deepcopy(compare_df_)
@@ -148,6 +148,6 @@ result = pd.DataFrame(ll,
                       columns=['dk', 'd', 'cci', 'rsi', 'compare_cci', 'min_principal', 'max_principal', 'total_times',
                                'shooting',
                                'last_principal', 'f'])
-result = result.loc[(result['shooting'] > 0.5) & (result['total_times'] > 50) & (result['last_principal'] > 10000) & (result['min_principal'] > 9000)]
-
-result.to_csv('result-' + f1 + '-' + f2 + '.csv', index=None)
+result = result.sort_values(by=['max_principal', 'last_principal', 'shooting', 'min_principal', 'total_times'],
+                     ascending=(False, False, False, False, False))
+result[:200].to_csv('result-short-' + f1 + '-' + f2 + '.csv', index=None)

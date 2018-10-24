@@ -140,6 +140,6 @@ result = pd.DataFrame(ll,
                       columns=['dk', 'd', 'cci', 'rsi', 'compare_cci', 'min_principal', 'max_principal', 'total_times',
                                'shooting',
                                'last_principal', 'f'])
-result = result.sort_values(by=['shooting', 'min_principal', 'total_times', 'last_principal', 'max_principal'],
+result = result.sort_values(by=['max_principal', 'last_principal', 'shooting', 'min_principal', 'total_times'],
                      ascending=(False, False, False, False, False))
 result[:200].to_csv('result-' + f1 + '-' + f2 + '.csv', index=None)
