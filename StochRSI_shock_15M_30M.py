@@ -32,7 +32,7 @@ def is_true(df, compare_df, compare_time):
     for index, row in df.loc[df['regime'] == 1].iterrows():
         t = row['timestamp'] - row['timestamp'] % compare_time - compare_time
         compare_row = compare_df.loc[compare_df['timestamp'] == t].iloc[0]
-        if compare_row['cci'] <= compare_cci or compare_row['cci'] >= -1 * compare_cci:
+        if compare_row['cci'] <= compare_cci and compare_row['cci'] >= -1 * compare_cci:
             continue
         else:
             df['regime'][index] = 'wait'
@@ -82,7 +82,8 @@ def anyasis(k, compare_k, compare_time):
     df['regime'] = np.where(df['regime'].shift(1) == 'short', 'close_short', df['regime'])
 
     re = df.iloc[-1]
-
+    # df[['date', 'open', 'high', 'low', 'close', 'regime']].loc[(df['regime'] != 'wait')].to_csv('result-15M.csv',
+    #                                                                                             index=None)
     if re['regime'] != 'wait':
         print(df[['date', 'close', 'regime']].tail(10))
     return re
