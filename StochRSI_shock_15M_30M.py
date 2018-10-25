@@ -90,20 +90,23 @@ def anyasis(k, compare_k, compare_time):
 
 def run():
     limit = 500
-    since = int(time.time()) * 1000 - 300000 * (limit)
+    since = int(time.time()) * 1000 - 300000 * (limit -1)
     k_5m_1 = ex.fetch_ohlcv('BTC/USD', '5m', since, limit)
-    since = int(time.time()) * 1000 - 300000 * (limit * 2 - 1)
+    since = int(time.time()) * 1000 - 300000 * (limit * 2 - 2)
     k_5m_2 = ex.fetch_ohlcv('BTC/USD', '5m', since, limit)
     k_5m = k_5m_2 + k_5m_1
+
     k_15m = public_tools.kline_fitting(k_5m, 3, 900)
+
     k_30m = public_tools.kline_fitting(k_5m, 6, 1800)
+
     re = anyasis(k_15m, k_30m, 1800)
 
 
 if __name__ == '__main__':
     while True:
         run()
-        time.sleep(60 * 15)
+        time.sleep(60 * 5)
 
 
 
