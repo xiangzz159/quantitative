@@ -55,7 +55,7 @@ def anyasis(k, compare_k, compare_time):
     stock['cci']
     stock['stoch_rsi']
     # 震荡行情判断
-    compare_stock = StockDataFrame.retype(df)
+    compare_stock = StockDataFrame.retype(compare_df)
     compare_df['date'] = compare_df['timestamp'].apply(lambda x: time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(x)))
     compare_df['date'] = pd.to_datetime(compare_df['date'])
     compare_stock['cci']
@@ -91,12 +91,9 @@ def anyasis(k, compare_k, compare_time):
 
 
 def run():
-    limit = 500
+    limit = 750
     since = int(time.time()) * 1000 - 300000 * (limit - 1)
-    k_5m_1 = ex.fetch_ohlcv('BTC/USD', '5m', since, limit)
-    since = int(time.time()) * 1000 - 300000 * (limit * 2 - 2)
-    k_5m_2 = ex.fetch_ohlcv('BTC/USD', '5m', since, limit)
-    k_5m = k_5m_2 + k_5m_1
+    k_5m = ex.fetch_ohlcv('BTC/USD', '5m', since, limit)
     k_30m = public_tools.kline_fitting(k_5m, 6, 1800)
     k_1H = public_tools.kline_fitting(k_5m, 12, 3600)
     re = anyasis(k_30m, k_1H, 3600)
