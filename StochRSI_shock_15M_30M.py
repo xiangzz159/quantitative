@@ -74,13 +74,13 @@ def anyasis(k, compare_k, compare_time):
                 df['cci'] > cci_) | (
                 df['stoch_k'] - df['stoch_k'].shift(1) + df['stoch_d'].shift(1) - df['stoch_d'] > dk_) & (
                 df['stoch_rsi'] > rsi_) & (
-                df['cci'] > cci_), 'short', 'wait')
-    
+                df['cci'] > cci_), 'short', df['regime'])
+
     df = is_true(df, compare_df, compare_time)
 
     df['regime'] = np.where(df['regime'].shift(1) == 'long', 'close_long', df['regime'])
     df['regime'] = np.where(df['regime'].shift(1) == 'short', 'close_short', df['regime'])
-    
+
     re = df.iloc[-1]
 
     if re['regime'] != 'wait':
