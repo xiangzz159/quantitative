@@ -1,4 +1,4 @@
-# ！/usr/bin/env python
+#！/usr/bin/env python
 # _*_ coding:utf-8 _*_
 
 '''
@@ -21,13 +21,8 @@ import ccxt
 from tools import public_tools
 
 # 参数
-dk, d, cci, rsi, compare_cci = 0, 15, -85, 20, 80
+dk,d,cci,rsi,compare_cci = 0,15,-85,20,80
 dk_, d_, cci_, rsi_ = 0, 85, 85, 80
-
-ex = ccxt.bitmex({
-    'timeout': 60000
-})
-
 
 def is_true(df, compare_df, compare_time):
     for index, row in df.loc[df['regime'] == 1].iterrows():
@@ -38,7 +33,6 @@ def is_true(df, compare_df, compare_time):
         else:
             df['regime'][index] = 'wait'
     return df
-
 
 def anyasis(k, compare_k, compare_time):
     df = pd.DataFrame(k, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
@@ -55,7 +49,7 @@ def anyasis(k, compare_k, compare_time):
     stock['cci']
     stock['stoch_rsi']
     # 震荡行情判断
-    compare_stock = StockDataFrame.retype(compare_df)
+    compare_stock = StockDataFrame.retype(df)
     compare_df['date'] = compare_df['timestamp'].apply(lambda x: time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(x)))
     compare_df['date'] = pd.to_datetime(compare_df['date'])
     compare_stock['cci']
@@ -77,31 +71,37 @@ def anyasis(k, compare_k, compare_time):
                 df['stoch_k'] - df['stoch_k'].shift(1) + df['stoch_d'].shift(1) - df['stoch_d'] > dk_) & (
                 df['stoch_rsi'] > rsi_) & (
                 df['cci'] > cci_), 'short', df['regime'])
-
+    
     df = is_true(df, compare_df, compare_time)
 
     df['regime'] = np.where(df['regime'].shift(1) == 'long', 'close_long', df['regime'])
     df['regime'] = np.where(df['regime'].shift(1) == 'short', 'close_short', df['regime'])
-
+    
     re = df.iloc[-1]
 
-    # df[['date', 'open', 'high', 'low', 'close', 'regime', 'volume']].loc[(df['regime'] != 'wait')].to_csv('result-30M.csv',
-    #                                                                                             index=None)
-    if re['regime'] != 'wait':
-        print(df[['date', 'close', 'regime']].tail(10))
+    # if re['regime'] != 'wait':
+    #     print(df[['date', 'close', 'regime']].tail(10))
+    print(df[['date', 'close', 'regime']].tail(10))
+
     return re
 
 
-def run():
-    limit = 750
-    since = int(time.time()) * 1000 - 300000 * (limit - 1)
-    k_5m = ex.fetch_ohlcv('BTC/USD', '5m', since, limit)
-    k_30m = public_tools.kline_fitting(k_5m, 6, 1800)
-    k_1H = public_tools.kline_fitting(k_5m, 12, 3600)
-    re = anyasis(k_30m, k_1H, 3600)
-
-
 if __name__ == '__main__':
-    while True:
-        run()
-        time.sleep(60 * 5)
+    ex = ccxt.bitmex()
+    limit = 500
+    since = int(time.time()) * 1000 - 300000 * (limit)
+    k_5m_1 = ex.fetch_ohlcv('BTC/USD', '5m', since, limit)
+    since = int(time.time()) * 1000 - 300000 * (limit * 2 - 1)
+    k_5m_2 = ex.fetch_ohlcv('BTC/USD', '5m', since, limit)
+    k_5m = k_5m_2 + k_5m_1
+    k_15m = public_tools.kline_fitting(k_5m, 3, 900)
+    k_30m = public_tools.kline_fitting(k_5m, 6, 1800)
+    re = anyasis(k_15m, k_30m, 1800)
+
+
+
+
+
+
+
+
