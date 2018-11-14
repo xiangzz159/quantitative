@@ -751,7 +751,19 @@ class StockDataFrame(pd.DataFrame):
         slow = df['close_26_ema']
         df['macd'] = fast - slow
         df['macds'] = df['macd_9_ema']
-        df['macdh'] = 2 * (df['macd'] - df['macds'])
+        df['hist'] = df['macd'] - df['macds']
+        df['macdh'] = 2 * df['hist']
+
+        # df['hist_signal'] = np.where((df['hist'] >= df['hist'].shift(1)) & (df['hist'] > 0), 'histA_IsUp', None)
+        # df['hist_signal'] = np.where((df['hist'] < df['hist'].shift(1)) & (df['hist'] > 0), 'histA_IsDown', df['hist_signal'])
+        # df['hist_signal'] = np.where((df['hist'] < df['hist'].shift(1)) & (df['hist'] <= 0), 'histB_IsUp', df['hist_signal'])
+        # df['hist_signal'] = np.where((df['hist'] >= df['hist'].shift(1)) & (df['hist'] <= 0), 'histB_IsDown', df['hist_signal'])
+
+        df['hist_signal'] = np.where((df['hist'] >= df['hist'].shift(1)) & (df['hist'] > 0), 2, 0)
+        df['hist_signal'] = np.where((df['hist'] < df['hist'].shift(1)) & (df['hist'] > 0), 1, df['hist_signal'])
+        df['hist_signal'] = np.where((df['hist'] < df['hist'].shift(1)) & (df['hist'] <= 0), -2, df['hist_signal'])
+        df['hist_signal'] = np.where((df['hist'] >= df['hist'].shift(1)) & (df['hist'] <= 0), -1, df['hist_signal'])
+
         del df['macd_9_ema']
         del fast
         del slow
@@ -803,6 +815,14 @@ class StockDataFrame(pd.DataFrame):
         D = pd.Series.rolling(K, window=3).mean()
         df['stoch_k'] = K
         df['stoch_d'] = D
+
+        del df['close_12_ema']
+        del df['close_26_ema']
+        del df['close_-1_s']
+        del df['close_-1_d']
+        del df['rs_14']
+        del df['rsi_14']
+
 
     @staticmethod
     def parse_column_name(name):
