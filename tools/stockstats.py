@@ -816,8 +816,6 @@ class StockDataFrame(pd.DataFrame):
         df['stoch_k'] = K
         df['stoch_d'] = D
 
-        del df['close_12_ema']
-        del df['close_26_ema']
         del df['close_-1_s']
         del df['close_-1_d']
         del df['rs_14']

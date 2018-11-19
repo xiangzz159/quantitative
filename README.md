@@ -42,3 +42,6 @@ quantitative
 
 ```
 <br> 
+
+nohup python3 -u ./quantitative/MACD_RSI_test.py > macd.log 2>&1 &
+nohup python3 -u ./quantitative/MACD_RSI_ETH_test.py > eth_macd.log 2>&1 &
