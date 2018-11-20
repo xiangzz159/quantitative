@@ -1,4 +1,4 @@
-#！/usr/bin/env python
+# ！/usr/bin/env python
 # _*_ coding:utf-8 _*_
 
 '''
@@ -18,6 +18,7 @@ import pandas as pd
 import ccxt
 from tools import public_tools
 import numpy as np
+
 
 def analysis(k):
     # 参数设置
@@ -73,17 +74,27 @@ def analysis(k):
     return last_serise, high, low
 
 
-ex = ccxt.bitmex()
+ex = ccxt.bitmex({
+    'timeout': 60000
+})
 limit = 750
 symbol = 'BTC/USD'
+long_print = False
 while True:
-    since = int(time.time()) * 1000 - 3600000 * (limit - 1)
-    k_1H = ex.fetch_ohlcv(symbol, '1h', since, limit)
-    k_4H = public_tools.kline_fitting_1H_4H(k_1H)
-    series, high, low = analysis(k_4H)
-    if series['signal'] == 'long':
-        print(public_tools.get_time(), symbol, 'make long trade, now price is', series['close'])
-    elif series['signal'] == 'short':
-        print(public_tools.get_time(), symbol, 'make short trade, now price is', series['close'])
-
-    time.sleep(100)
+    try:
+        since = int(time.time()) * 1000 - 3600000 * (limit - 1)
+        k_1H = ex.fetch_ohlcv(symbol, '1h', since, limit)
+        k_4H = public_tools.kline_fitting_1H_4H(k_1H)
+        series, high, low = analysis(k_4H)
+        if series['signal'] == 'long':
+            if long_print == False:
+                print(public_tools.get_time(), symbol, 'make long trade, now price is', series['close'])
+                long_print = True
+        elif series['signal'] == 'short':
+            if long_print == True:
+                print(public_tools.get_time(), symbol, 'make short trade, now price is', series['close'])
+                long_print = False
+    except BaseException as e:
+        print(e)
+    finally:
+        time.sleep(100)
