@@ -17,6 +17,7 @@ import csv
 import time
 import pandas as pd
 import numpy as np
+import copy
 
 
 def floatrange(start, stop, num):
@@ -31,6 +32,7 @@ def csv2df(filename):
 
 
 filename = 'ETH2017-09-01-now-1H'
+df_ = csv2df(filename + '.csv')
 l = []
 for hist_ema in range(3, 12):
     for hist_signal_ma in range(3, 10):
@@ -38,7 +40,7 @@ for hist_ema in range(3, 12):
             for ii in floatrange(0, 5.0, 0.5):
                 for jj in floatrange(-5.0, 5.0, 0.5):
                     money = 10000
-                    df = csv2df(filename + '.csv')
+                    df = copy.deepcopy(df_)
                     df = df.astype(float)
                     df['Timestamp'] = df['Timestamp'].astype(int)
                     stock = StockDataFrame.retype(df)
