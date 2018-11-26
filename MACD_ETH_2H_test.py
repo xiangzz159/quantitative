@@ -32,11 +32,11 @@ def csv2df(filename):
 
 filename = 'ETH2017-09-01-now-2H'
 l = []
-for hist_ema in range(3, 12):
-    for hist_signal_ma in range(3, 10):
+for hist_ema in range(2, 9):
+    for hist_signal_ma in range(2, 9):
         for hist_signal_ma_ in range(3, 10):
-            for ii in floatrange(-5.0, 5.0, 0.1):
-                for jj in floatrange(-5.0, 5.0, 0.1):
+            for ii in floatrange(0, 5.0, 0.5):
+                for jj in floatrange(-5.0, 5.0, 0.5):
                     money = 10000
                     df = csv2df(filename + '.csv')
                     df = df.astype(float)

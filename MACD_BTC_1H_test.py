@@ -35,8 +35,8 @@ l = []
 for hist_ema in range(3, 12):
     for hist_signal_ma in range(3, 10):
         for hist_signal_ma_ in range(3, 10):
-            for ii in floatrange(-5.0, 5.0, 0.1):
-                for jj in floatrange(-5.0, 5.0, 0.1):
+            for ii in floatrange(0, 5.0, 0.5):
+                for jj in floatrange(-5.0, 5.0, 0.5):
                     money = 10000
                     df = csv2df(filename + '.csv')
                     df = df.astype(float)
