@@ -31,7 +31,7 @@ def csv2df(filename):
 
 
 filename = 'BTC2017-09-01-now-2H'
-df = csv2df(filename + '.csv')
+df_ = csv2df(filename + '.csv')
 l = []
 for hist_ema in range(2, 9):
     for hist_signal_ma in range(2, 9):
