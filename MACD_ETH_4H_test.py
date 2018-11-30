@@ -61,13 +61,13 @@ for hist_ema in range(1, 8):
 
                     # DIF->macd  DEA->macds  MACD->macdh
                     df['signal'] = np.where(
-                        ((abs(df[hist_ema_name]) >= ii) & (df[hist_signal_ma_name] < jj)) & ((
+                        ((abs(df[hist_ema_name]) >= ii) & (df[hist_signal_ma1_name] < jj)) & ((
                                 (df[hist_signal_ma_name] >= -1) & (df[hist_signal_ma_name].shift(1) < -1))), 'long',
                         'wait')
                     df['signal'] = np.where((df['hist'].shift(1) < 0) & (df['hist'] > 0), 'long', df['signal'])
 
                     df['signal'] = np.where(
-                        ((abs(df[hist_ema_name]) >= ii) & (df[hist_signal_ma_name] >= jj)) & ((
+                        ((abs(df[hist_ema_name]) >= ii) & (df[hist_signal_ma1_name] >= jj)) & ((
                                 (df[hist_signal_ma_name] <= 1) & (df[hist_signal_ma_name].shift(1) > 1))), 'short',
                         df['signal'])
                     df['signal'] = np.where((df['hist'].shift(1) > 0) & (df['hist'] < 0), 'short', df['signal'])
@@ -116,4 +116,4 @@ for hist_ema in range(1, 8):
 
 result = pd.DataFrame(l, columns=['filename', 'hist_ema', 'hist_signal_ma', 'hist_signal_ma_', 'i', 'j', 'max_drawdown',
                                   'max_money', 'shooting', 'last_money'])
-result.to_csv('ETH_result_4H.csv')
+result.to_csv('result_ETH_4H.csv')
