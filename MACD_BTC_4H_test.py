@@ -113,11 +113,13 @@ for hist_ema in range(1, 8):
                                 true_times += 1
                             max_money = max(max_money, money)
 
-                        print(filename, hist_ema, hist_signal_ma, hist_signal_ma_, ii, jj, max_drawdown, max_money,
+                        print(filename, hist_ema, hist_signal_ma, hist_signal_ma_, ii, jj, zz, max_drawdown, max_money,
                               round(true_times / total_times, 3), money)
-                        l.append([filename, hist_ema, hist_signal_ma, hist_signal_ma_, ii, jj, max_drawdown, max_money,
-                                  round(true_times / total_times, 3), money])
+                        l.append(
+                            [filename, hist_ema, hist_signal_ma, hist_signal_ma_, ii, jj, zz, max_drawdown, max_money,
+                             round(true_times / total_times, 3), money])
 
-result = pd.DataFrame(l, columns=['filename', 'hist_ema', 'hist_signal_ma', 'hist_signal_ma_', 'i', 'j', 'max_drawdown',
+result = pd.DataFrame(l, columns=['filename', 'hist_ema', 'hist_signal_ma', 'hist_signal_ma_', 'i', 'j', 'z',
+                                  'max_drawdown',
                                   'max_money', 'shooting', 'last_money'])
 result.to_csv('result_BTC_4H.csv')

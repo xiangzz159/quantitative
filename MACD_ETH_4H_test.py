@@ -45,7 +45,8 @@ for hist_ema in range(1, 8):
                         df = df.astype(float)
                         df['Timestamp'] = df['Timestamp'].astype(int)
                         stock = StockDataFrame.retype(df)
-                        df['date'] = df['timestamp'].apply(lambda x: time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(x)))
+                        df['date'] = df['timestamp'].apply(
+                            lambda x: time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(x)))
                         df['date'] = pd.to_datetime(df['date'])
 
                         hist_ema_name = 'hist_%d_ema' % hist_ema
@@ -64,7 +65,7 @@ for hist_ema in range(1, 8):
                         df['signal'] = np.where(
                             ((abs(df[hist_ema_name]) >= ii) & (df[hist_signal_ma1_name] < jj)) & ((
                                     (df[hist_signal_ma_name] >= -1 * zz) & (
-                                        df[hist_signal_ma_name].shift(1) < -1 * zz))), 'long',
+                                    df[hist_signal_ma_name].shift(1) < -1 * zz))), 'long',
                             'wait')
                         df['signal'] = np.where((df['hist'].shift(1) < 0) & (df['hist'] > 0), 'long', df['signal'])
 
@@ -112,11 +113,13 @@ for hist_ema in range(1, 8):
                                 true_times += 1
                             max_money = max(max_money, money)
 
-                        print(filename, hist_ema, hist_signal_ma, hist_signal_ma_, ii, jj, max_drawdown, max_money,
+                        print(filename, hist_ema, hist_signal_ma, hist_signal_ma_, ii, jj, zz, max_drawdown, max_money,
                               round(true_times / total_times, 3), money)
-                        l.append([filename, hist_ema, hist_signal_ma, hist_signal_ma_, ii, jj, max_drawdown, max_money,
-                                  round(true_times / total_times, 3), money])
+                        l.append(
+                            [filename, hist_ema, hist_signal_ma, hist_signal_ma_, ii, jj, zz, max_drawdown, max_money,
+                             round(true_times / total_times, 3), money])
 
-result = pd.DataFrame(l, columns=['filename', 'hist_ema', 'hist_signal_ma', 'hist_signal_ma_', 'i', 'j', 'max_drawdown',
+result = pd.DataFrame(l, columns=['filename', 'hist_ema', 'hist_signal_ma', 'hist_signal_ma_', 'i', 'j', 'z',
+                                  'max_drawdown',
                                   'max_money', 'shooting', 'last_money'])
 result.to_csv('result_ETH_4H.csv')
