@@ -46,6 +46,9 @@ quantitative
 nohup python3 -u ./quantitative/MACD_ETH_1H_test.py > macd_eth_1h.log 2>&1 &
 nohup python3 -u ./quantitative/MACD_ETH_2H_test.py > macd_eth_2h.log 2>&1 &
 nohup python3 -u ./quantitative/MACD_ETH_4H_test.py > macd_eth_4h.log 2>&1 &
-nohup python3 -u ./quantitative/MACD_ETH_1D_test.py > macd_eth_1d.log 2>&1 &
+
+nohup python3 -u ./quantitative/MACD_BTC_1H_test.py > macd_btc_1h.log 2>&1 &
+nohup python3 -u ./quantitative/MACD_BTC_2H_test.py > macd_btc_2h.log 2>&1 &
+nohup python3 -u ./quantitative/MACD_BTC_4H_test.py > macd_btc_4h.log 2>&1 &
 
 nohup python3 -u ./quantitative/bitmex_macd_print.py > bitmex_macd_print.py.log 2>&1 &
