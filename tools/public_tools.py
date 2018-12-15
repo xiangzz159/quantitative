@@ -16,6 +16,8 @@
 import config
 import pymysql
 import time
+import pandas as pd
+from tools import data2df
 
 
 # K线拟合：1h->4h
@@ -165,3 +167,14 @@ def insert_positions(params={}):
         params['stop_price'], params['strategies'], params['side'])
     print(get_time(), 'insert into positions sql:', sql)
     return sql
+
+
+if __name__ == '__main__':
+    df = data2df.csv2df('../data/BTC2018-10-15-now-30M.csv')
+    df = df.astype(float)
+    l = df.values.tolist()
+    print(l[-1])
+    l_ = kline_fitting(l, 2, 3600)
+    df = pd.DataFrame(l_, columns=['Timestamp', 'High', 'Low', 'Open', 'Close', 'Volume'])
+    fileName = '../data/BTC%s-%s.csv' % ('2018-10-15', "now-1H")
+    df.to_csv(fileName, index=None)

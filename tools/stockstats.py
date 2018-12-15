@@ -749,9 +749,12 @@ class StockDataFrame(pd.DataFrame):
         """
         fast = df['close_12_ema']
         slow = df['close_26_ema']
+        # DIF
         df['macd'] = fast - slow
+        # DEA
         df['macds'] = df['macd_9_ema']
         df['hist'] = df['macd'] - df['macds']
+        # MACD
         df['macdh'] = 2 * df['hist']
 
         # df['hist_signal'] = np.where((df['hist'] >= df['hist'].shift(1)) & (df['hist'] > 0), 'histA_IsUp', None)
