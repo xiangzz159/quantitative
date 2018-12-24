@@ -18,21 +18,33 @@ import pandas as pd
 import time
 from job import wave_guess
 import numpy as np
+from tools.stockstats import StockDataFrame
 
-df = data2df.csv2df('BTC2016-now-1D.csv')
-df['Date'] = df['Timestamp'].apply(lambda x: time.strftime("%Y--%m--%d", time.localtime(int(x))))
-# 转换datetime格式
-df['Date'] = pd.to_datetime(df['Date'])
+df = data2df.csv2df('BTC2017-09-01-now-4H.csv')
+df = df.astype(float)
+df['Timestamp'] = df['Timestamp'].astype(int)
+stock = StockDataFrame.retype(df)
 
-df['ma5'] = np.round(df['Close'].rolling(window=5, center=False).mean(), 2)
-df['v_ma5'] = np.round(df['Volume'].rolling(window=5, center=False).mean(), 2)
+df['date'] = df['timestamp'].apply(lambda x: time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(x)))
+df['date'] = pd.to_datetime(df['date'])
+
+stock['cci']
+stock['stoch_rsi']
+# 去掉前几个cci指标不准数据
+df = df[5:]
+
+df['ma5'] = np.round(df['close'].rolling(window=5, center=False).mean(), 2)
+df['v_ma5'] = np.round(df['volume'].rolling(window=5, center=False).mean(), 2)
 
 
-arr1 = pd.Series(df['Close'].values)
-wave_guess.wave_guess(arr1)
+# arr1 = pd.Series(df['close'].values)
+# wave_guess.wave_guess(arr1)
+#
+# arr2 = pd.Series(df['ma5'].values)
+# wave_guess.wave_guess(arr2)
+#
+# arr3 = pd.Series(df['v_ma5'].values)
+# wave_guess.wave_guess(arr3)
 
-arr2 = pd.Series(df['ma5'].values)
-wave_guess.wave_guess(arr2)
-
-arr3 = pd.Series(df['v_ma5'].values)
-wave_guess.wave_guess(arr3)
+arr4 = pd.Series(df['cci'].values)
+wave_guess.wave_guess(arr4)
