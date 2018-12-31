@@ -18,9 +18,8 @@ import numpy as np
 from tools.stockstats import StockDataFrame
 import time
 import matplotlib.ticker as ticker
-from tools import data2df
+from tools import data2df, wave_guess
 import matplotlib.pyplot as plt
-from job import wave_guess
 
 # 本金
 principal = 10000.0
