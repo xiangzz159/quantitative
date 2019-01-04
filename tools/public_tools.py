@@ -168,6 +168,10 @@ def insert_positions(params={}):
     print(get_time(), 'insert into positions sql:', sql)
     return sql
 
+def floatrange(start, stop, num, decimal=5):
+    return [round(start + float(i) * num, decimal) for i in range(int((stop - start) / num))]
+
+
 
 if __name__ == '__main__':
     df = data2df.csv2df('../data/BTC2018-10-15-now-30M.csv')

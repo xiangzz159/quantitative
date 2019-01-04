@@ -20,7 +20,6 @@ import time
 import matplotlib.ticker as ticker
 from tools import data2df
 import matplotlib.pyplot as plt
-from tools import wave_guess
 
 # filename = 'BTC2017-09-01-now-4H'
 filename = 'BTC2015-02-19-now-4H'
@@ -45,32 +44,37 @@ df = df[50:]
 
 df['signal'] = np.where((df['volatility_rate'].shift(1) < 0) & (df['volatility_rate'] > 0), 'long', 'wait')
 df['signal'] = np.where((df['volatility_rate'] > 0) & (df['volatility_mean'] > 0) & (
-            df['volatility_rate'].shift(1) < df['volatility_mean'].shift(1)) & (
-                                    df['volatility_rate'] > df['volatility_mean']), 'long', df['signal'])
+        df['volatility_rate'].shift(1) < df['volatility_mean'].shift(1)) & (
+                                df['volatility_rate'] > df['volatility_mean']), 'long', df['signal'])
 df['signal'] = np.where((df['volatility_rate'].shift(1) > 0) & (df['volatility_rate'] < 0), 'short', df['signal'])
 df['signal'] = np.where((df['volatility_rate'] < 0) & (df['volatility_mean'] < 0) & (
-            df['volatility_rate'].shift(1) > df['volatility_mean'].shift(1)) & (
-                                    df['volatility_rate'] < df['volatility_mean']), 'short', df['signal'])
+        df['volatility_rate'].shift(1) > df['volatility_mean'].shift(1)) & (
+                                df['volatility_rate'] < df['volatility_mean']), 'short', df['signal'])
 df['signal'] = np.where((df['signal'] == 'wait') & (df['volatility_rate'].shift(1) > df['volatility_mean'].shift(1)) & (
-            df['volatility_rate'] < df['volatility_mean']), 'close_long', df['signal'])
+        df['volatility_rate'] < df['volatility_mean']), 'close_long', df['signal'])
 df['signal'] = np.where((df['signal'] == 'wait') & (df['volatility_rate'].shift(1) < df['volatility_mean'].shift(1)) & (
-            df['volatility_rate'] > df['volatility_mean']), 'close_short', df['signal'])
+        df['volatility_rate'] > df['volatility_mean']), 'close_short', df['signal'])
 
-df[['close']] = round(df[['close']], 1)
-df[['volatility_rate', 'volatility_mean', 'volatility_std']] = round(
-    df[['volatility_rate', 'volatility_mean', 'volatility_std']], 5)
 df_ = df[['date', 'close', 'volatility_rate', 'volatility_mean', 'volatility_std', 'signal']].loc[
     df['signal'] != 'wait']
 df_['signal'] = np.where(df_['signal'].shift(1) == df_['signal'], 'wait', df_['signal'])
+df_['signal'] = np.where((df_['signal'].shift(1) == 'close_long') & (df_['signal'] == 'close_short'), 'wait', df_['signal'])
+df_['signal'] = np.where((df_['signal'].shift(1) == 'close_short') & (df_['signal'] == 'close_long'), 'wait', df_['signal'])
+df_ = df_.loc[df_['signal'] != 'wait']
 if (df_[:1]['signal'] == 'close_long').bool() or (df_[:1]['signal'] == 'close_short').bool():
     df_ = df_[1:]
 if (df_[-1:]['signal'] == 'long').bool() or (df_[-1:]['signal'] == 'short').bool():
     df_ = df_[:len(df_) - 1]
 
-# df_.loc[df_['signal'] != 'wait'].to_csv('../data/volatility_rate.csv', index=False)
+df_[['close']] = round(df_[['close']], 1)
+df_[['volatility_rate', 'volatility_mean', 'volatility_std']] = round(
+    df_[['volatility_rate', 'volatility_mean', 'volatility_std']], 5)
+df_[['date', 'close', 'signal']].loc[df_['signal'] != 'wait'].to_csv('../data/volatility_rate.csv', index=False)
+
 l = []
 money = 10000
-for i in range(1, len(df_), 2):
+i = 1
+while i < len(df_):
     row_ = df_.iloc[i - 1]
     row = df_.iloc[i]
     if row['signal'] == 'close_long' and row_['signal'] == 'long':
@@ -83,10 +87,11 @@ for i in range(1, len(df_), 2):
         money = money * row['close'] / row_['close']
         l.append([row['date'], row['close'], money, 'long', 1])
         i -= 1
-    elif row['signal'] == 'long' and row['signal'] == 'short':
+    elif row['signal'] == 'long' and row_['signal'] == 'short':
         money = money * row_['close'] / row['close']
         l.append([row['date'], row['close'], money, 'short', -1])
         i -= 1
+    i += 2
 
 profits = pd.DataFrame(l, columns=['date', 'close', 'money', 'type', 's'])
 
