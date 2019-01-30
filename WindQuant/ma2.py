@@ -9,7 +9,7 @@
 
 @time: 2019/1/30 10:07
 
-@desc:
+@desc: 基于WindQuant API实现的MA策略
 
 '''
 
