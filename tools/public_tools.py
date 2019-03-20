@@ -13,11 +13,13 @@
 
 '''
 
-import config
 import pymysql
 import time
 import pandas as pd
 from tools import data2df
+import random
+import numpy as np
+from functools import wraps
 
 
 # K线拟合：1h->4h
@@ -94,55 +96,6 @@ def kline_fitting(kline, n, fitting_time):
         l.append([timestamp, open, high, low, close, volumn])
     return l
 
-def fetch_data(sql):
-    data = None
-    flag = False
-    try:
-        db = pymysql.connect(host=config.DB_HOST, user=config.DB_USER, password=config.DB_PASSWORD, db=config.DB_NAME)
-        cursor = db.cursor()
-        cursor.execute(sql)
-        data = cursor.fetchone()
-        flag = True
-    except BaseException as e:
-        print(get_time(), 'fetch data failed, error:%s, sql:%s' % (str(e), sql))
-    finally:
-        db.close()
-        return data, flag
-
-
-def fetch_datas(sql):
-    data = None
-    flag = False
-    try:
-        db = pymysql.connect(host=config.DB_HOST, user=config.DB_USER, password=config.DB_PASSWORD, db=config.DB_NAME)
-        cursor = db.cursor()
-        cursor.execute(sql)
-        data = cursor.fetchall()
-        flag = True
-    except BaseException as e:
-        print(get_time(), 'fetch datas failed, error:%s, sql:%s' % (str(e), sql))
-    finally:
-        db.close()
-        return data, flag
-
-
-def execute_sql(sql):
-    flag = False
-    id = None
-    try:
-        db = pymysql.connect(host=config.DB_HOST, user=config.DB_USER, password=config.DB_PASSWORD, db=config.DB_NAME)
-        cursor = db.cursor()
-        cursor.execute(sql)
-        db.commit()
-        id = cursor.lastrowid
-        flag = True
-    except BaseException as e:
-        db.rollback()
-        print(get_time(), 'execute sql failed, error:%s, sql:%s' % (str(e), sql))
-    finally:
-        db.close()
-        return id, flag
-
 
 def get_time():
     timestamp = time.time() + 8 * 3600  # 处理时间戳的时区
@@ -150,35 +103,24 @@ def get_time():
     return time.strftime("%Y-%m-%d %H:%M", time_local)
 
 
-def insert_quantitative_order(params={}):
-    sql = 'INSERT INTO `quantitative_order` (`position_id`, `account_id`, `username`, `exchange_code`, `symbol`,`order_id`, `price`, `amount`, `average_price`, `filled`, `side`, `type`, `status`, `info`, `create_time`) VALUES ("%d", "%s", "%s", "%s", "%s", "%s", "%.10f", "%.10f", "%.10f", "%.10f", "%s", "%s", "%s", "%s", "%d")' % (
-        params['position_id'], params['account_id'], params['username'], params['exchange_code'], params['symbol'],
-        params['id'],
-        params['price'], params['amount'], params['price'], params['filled'], params['side'], params['type'],
-        params['status'], params['info'], int(params['timestamp'] / 1000))
-    print(get_time(), 'insert into quantitative order sql:', sql)
-    return sql
-
-
-def insert_positions(params={}):
-    sql = 'INSERT INTO `positions` (`account_id`, `username`, `exchange_code`, `symbol`, `open_price`, `open_amount`, `open_time`, `stop_price`, `strategies`, `side`) VALUES ("%s", "%s", "%s", "%s", "%.10f", "%.10f", "%d", "%.10f", "%s", "%s") ' % (
-        params['account_id'], params['username'], params['exchange_code'], params['symbol'],
-        params['price'], params['amount'], params['timestamp'],
-        params['stop_price'], params['strategies'], params['side'])
-    print(get_time(), 'insert into positions sql:', sql)
-    return sql
-
 def floatrange(start, stop, num, decimal=5):
     return [round(start + float(i) * num, decimal) for i in range(int((stop - start) / num))]
 
 
+def uniform_random(min, max):
+    random = np.random.RandomState()
+    return random.uniform(min, max)
 
-if __name__ == '__main__':
-    df = data2df.csv2df('../data/BTC2018-10-15-now-30M.csv')
-    df = df.astype(float)
-    l = df.values.tolist()
-    print(l[-1])
-    l_ = kline_fitting(l, 2, 3600)
-    df = pd.DataFrame(l_, columns=['Timestamp', 'High', 'Low', 'Open', 'Close', 'Volume'])
-    fileName = '../data/BTC%s-%s.csv' % ('2018-10-15', "now-1H")
-    df.to_csv(fileName, index=None)
+
+def fn_timer(function):
+    @wraps(function)
+    def function_timer(*args, **kwargs):
+        t0 = time.time()
+        result = function(*args, **kwargs)
+        t1 = time.time()
+        print("Total time running %s: %s seconds" %
+              (function.__name__, str(t1 - t0))
+              )
+        return result
+
+    return function_timer
