@@ -1,4 +1,4 @@
-from tools import boll_macd_ga_tools
+from tools import boll_macd_ga_tools_
 import pandas as pd
 import time
 from tools.stockstats import StockDataFrame
@@ -31,8 +31,8 @@ def get_signal(df, params):
     trend_C = 0.05
     stop_trade_times = 5
     ts = 3600
-    boll_macd_ga_tools._get_boll(df, stock, boll_A, boll_std_len)
-    boll_macd_ga_tools._get_macd(df, stock, macd_fast_len, macd_slow_len)
+    boll_macd_ga_tools_._get_boll(df, stock, boll_A, boll_std_len)
+    boll_macd_ga_tools_._get_macd(df, stock, macd_fast_len, macd_slow_len)
 
     # 通道宽度
     df['boll_width'] = abs(df['boll_ub'] - df['boll_lb'])
@@ -75,7 +75,7 @@ def get_signal(df, params):
                 df['close'] <= df['boll_lb'] + df['channel_limit']) & (
                 df['close'] >= df['boll_lb'] - df['channel_limit']), 'long', 'wait')
 
-    df = boll_macd_ga_tools.public_func(df, 'long', 'signal1')
+    df = boll_macd_ga_tools_.public_func(df, 'long', 'signal1')
     df['signal1'] = np.where((df['signal'] == 'trend') | ((df['signal1'] == 'wait') & (
             (df['high'] >= df['signal_boll'] - df['channel_stop_limit']) | (
             df['low'] <= df['signal_boll_lb'] - df['channel_stop_limit']))), 'close_long', df['signal1'])
@@ -98,7 +98,7 @@ def get_signal(df, params):
                                                                                           df['boll']))),
         'short', 'wait')
 
-    df = boll_macd_ga_tools.public_func(df, 'short', 'signal2')
+    df = boll_macd_ga_tools_.public_func(df, 'short', 'signal2')
     df['signal2'] = np.where((df['signal'] == 'trend') | ((df['signal2'] == 'wait') & (
             (df['low'] <= df['signal_boll_ub'] - df['channel_stop_limit']) | (
             df['high'] >= df['signal_boll'] + df['channel_stop_limit']))), 'close_short', df['signal2'])
@@ -122,7 +122,7 @@ def get_signal(df, params):
         'long',
         'wait')
 
-    df = boll_macd_ga_tools.public_func(df, 'long', 'signal3')
+    df = boll_macd_ga_tools_.public_func(df, 'long', 'signal3')
 
     df['signal3'] = np.where(
         (df['signal'] == 'trend') | ((df['signal3'] == 'wait') & (
@@ -136,7 +136,7 @@ def get_signal(df, params):
                 df['close'] >= df['boll_ub']) & (
                 df['close'] <= df['boll_ub'] + df['channel_limit']), 'short', 'wait')
 
-    df = boll_macd_ga_tools.public_func(df, 'short', 'signal4')
+    df = boll_macd_ga_tools_.public_func(df, 'short', 'signal4')
 
     df['signal4'] = np.where((df['signal'] == 'trend') | ((df['signal4'] == 'wait') & (
             (df['low'] <= df['signal_boll'] + df['channel_stop_limit']) | (
@@ -147,8 +147,8 @@ def get_signal(df, params):
 
 if __name__ == '__main__':
     pop_size, chromosome_length = 30, 6
-    pops = boll_macd_ga_tools.init_pops(pop_size, chromosome_length)
-    iter = 10  # TODO 迭代次数 10
+    pops = boll_macd_ga_tools_.init_pops(pop_size, chromosome_length)
+    iter = 5  # TODO 迭代次数 10
     pc = 0.6  # 杂交概率
     pm = 0.01  # 变异概率
     results = []  # 存储每一代的最优解，N个二元组
@@ -165,7 +165,6 @@ if __name__ == '__main__':
     re_total_yield = []
     last_signal = 'wait'
 
-    last_individual = None
     last_trade_price = 0.0
     last_yield = 1.0
 
@@ -173,68 +172,65 @@ if __name__ == '__main__':
     signal = 'wait'
     signal_num = 0
     last_trade_price = 0.
-    side = None
+    side = 'wait'
     while i < len(ori_df):
-        if last_individual is None:
-            test_df = ori_df[i - 300: i - 1]
-            best_individuals = []
-            best_fits = []
-            for j in range(iter):
-                obj_values = boll_macd_ga_tools.cal_fitness(test_df, pops, pop_size, chromosome_length)  # 计算绩效
-                fit_values = boll_macd_ga_tools.clear_fit_values(obj_values)
-                best_individual, best_fit = boll_macd_ga_tools.find_best(pops, fit_values,
-                                                                         chromosome_length)  # 第一个是最优基因序列, 第二个是对应的最佳个体适度
-                best_individuals.append(best_individual)
-                best_fits.append(best_fit)
-                results.append([best_individual, best_fit])
-                boll_macd_ga_tools.selection(pops, fit_values)  # 选择
-                boll_macd_ga_tools.crossover(pops, pc)  # 染色体交叉（最优个体之间进行0、1互换）
-                boll_macd_ga_tools.mutation(pops, pm)  # 染色体变异（其实就是随机进行0、1取反
-            # best_fit = min(best_fits)
-            # best_fit_idx = best_fits.index(best_fit)
-            last_individual = best_individuals[-1]
+        test_df = ori_df[i - 300: i - 1]
+        best_individuals = []
+        best_fits = []
+        for j in range(iter):
+            obj_values = boll_macd_ga_tools_.cal_fitness(test_df, pops, pop_size, chromosome_length)  # 计算绩效
+            fit_values = boll_macd_ga_tools_.clear_fit_values(obj_values)
+            best_individual, best_fit = boll_macd_ga_tools_.find_best(pops, fit_values,
+                                                                     chromosome_length)  # 第一个是最优基因序列, 第二个是对应的最佳个体适度
+            best_individuals.append(best_individual)
+            best_fits.append(best_fit)
+            results.append([best_individual, best_fit])
+            boll_macd_ga_tools_.selection(pops, fit_values)  # 选择
+            boll_macd_ga_tools_.crossover(pops, pc)  # 染色体交叉（最优个体之间进行0、1互换）
+            boll_macd_ga_tools_.mutation(pops, pm)  # 染色体变异（其实就是随机进行0、1取反
+        last_individual = best_individuals[-1]
 
         df = ori_df[i - 300: i]
         last_row = get_signal(df, last_individual)
 
-        if signal_num > 0:
-            signal = last_row['signal%d' % signal_num]
-        else:
-            for j in range(1, 5):
-                if last_row['signal%d' % j] in ['long', 'short'] and signal_num == 0:
+        for j in range(1, 5):
+            if last_row['signal%d' % j] in ['long', 'short']:
+                if side != last_row['signal%d' % j]:
                     signal = last_row['signal%d' % j]
                     signal_num = j
                     break
-
-        if last_row['signal'] == 'trend' and last_trade_price > 0:
+            elif last_row['signal%d' % j] in ['close_long', 'close_short']:
+                if signal_num == j and side in last_row['signal%d' % j]:
+                    signal = last_row['signal%d' % j]
+                    signal_num = -1
+                    break
+        print('*' * 50)
+        print(signal, side, last_trade_price, signal_num)
+        if signal in ['long', 'short']:
+            if side == 'wait':
+                side = signal
+                last_trade_price = last_row['close']
+            elif side != signal:
+                earnings = (last_row['close'] - last_trade_price) / last_trade_price if side == 'long' else (
+                                                                                                                    last_trade_price -
+                                                                                                                    last_row[
+                                                                                                                        'close']) / last_trade_price
+                last_yield = last_yield * (1 + earnings - 0.00025 * 2)
+                last_trade_price = last_row['close']
+                side = signal
+        if signal in ['close_long', 'close_short'] and side is not None:
             earnings = (last_row['close'] - last_trade_price) / last_trade_price if side == 'long' else (
                                                                                                                 last_trade_price -
                                                                                                                 last_row[
                                                                                                                     'close']) / last_trade_price
-            last_yield = last_yield * (1 + earnings - 0.001)
-            last_individual = None
+            last_yield = last_yield * (1 + earnings - 0.00075  - 0.00025)
             last_trade_price = 0.0
-            signal_num = 0
             signal = 'wait'
-            side = None
-
-        elif signal == 'wait' and last_trade_price <= 0:
-            last_individual = None if last_trade_price <= 0 else last_individual
-        elif signal in ['short', 'long'] and last_trade_price <= 0:
-            last_trade_price = last_row['close']
-            side = signal
-        elif signal in ['close_long', 'close_short'] and last_trade_price > 0:
-            earnings = (last_row['close'] - last_trade_price) / last_trade_price if side == 'long' else (
-                                                                                                                last_trade_price -
-                                                                                                                last_row[
-                                                                                                                    'close']) / last_trade_price
-            last_yield = last_yield * (1 + earnings - 0.001)
-            last_individual = None
-            last_trade_price = 0.0
-            signal_num = 0
-            signal = 'wait'
-            side = None
+            side = 'wait'
         re_total_yield.append(last_yield)
+
+        print(signal, side, last_trade_price, signal_num)
+        print(re_total_yield)
         if i % 50 == 0:
             print('\n', re_total_yield)
         i += 1
