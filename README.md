@@ -37,7 +37,7 @@ quantitative
 ├─test 测试文件夹
 │
 ├─config.py 配置文件
-│ pip
+│ 
 └─tools 通用工具类
 
 ```
