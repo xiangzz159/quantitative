@@ -70,7 +70,7 @@ if __name__ == '__main__':
     pm = 0.01  # 变异概率
     results = []  # 存储每一代的最优解，N个二元组
     filename = 'BTC2018-04-01-now-1H.csv'
-    lines = list(csv.reader(open(r'/root/quant/data/' + filename)))
+    lines = list(csv.reader(open(r'/home/centos/quantitative/' + filename)))
     # lines = list(csv.reader(open(r'./data/' + filename)))
     header, values = lines[0], lines[1:]
     data_dict = {h: v for h, v in zip(header, zip(*values))}
