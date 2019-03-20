@@ -204,8 +204,6 @@ if __name__ == '__main__':
                     signal = last_row['signal%d' % j]
                     signal_num = -1
                     break
-        print('*' * 50)
-        print(signal, side, last_trade_price, signal_num)
         if signal in ['long', 'short']:
             if side == 'wait':
                 side = signal
@@ -229,8 +227,6 @@ if __name__ == '__main__':
             side = 'wait'
         re_total_yield.append(last_yield)
 
-        print(signal, side, last_trade_price, signal_num)
-        print(re_total_yield)
         if i % 50 == 0:
             print('\n', re_total_yield)
         i += 1
