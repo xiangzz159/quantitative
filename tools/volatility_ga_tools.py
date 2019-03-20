@@ -232,7 +232,6 @@ async def cal_someone_fitness(df,
     if (df_[-1:]['signal'] == 'long').bool() or (df_[-1:]['signal'] == 'short').bool():
         df_ = df_[:len(df_) - 1]
 
-    l = []
     market_rate = 0.00075
     market_yield_ = 0.0  # 记录连续亏损收益
     total_yield = 0.0
@@ -248,26 +247,22 @@ async def cal_someone_fitness(df,
             part_df = df.loc[(df['timestamp'] > row_['timestamp']) & (df['timestamp'] <= row['timestamp'])]
             min_price = min(part_df.low)
             md = (row_['close'] - min_price) / row_['close']
-            l.append([row['date'], row['close'], market_yield, 'long', 1])
         elif row['signal'] == 'close_short' and row_['signal'] == 'short':
             market_yield = (row_['close'] - row['close']) / row['close'] - market_rate * 2
             part_df = df.loc[(df['timestamp'] > row_['timestamp']) & (df['timestamp'] <= row['timestamp'])]
             max_price = min(part_df.high)
             md = (max_price - row_['close']) / row_['close']
-            l.append([row['date'], row['close'], market_yield, 'short', -1])
         elif row['signal'] == 'short' and row_['signal'] == 'long':
             market_yield = (row['close'] - row_['close']) / row['close'] - market_rate * 2
             part_df = df.loc[(df['timestamp'] > row_['timestamp']) & (df['timestamp'] <= row['timestamp'])]
             min_price = min(part_df.low)
             md = (row_['close'] - min_price) / row_['close']
-            l.append([row['date'], row['close'], market_yield, 'long', 1])
             i -= 1
         elif row['signal'] == 'long' and row_['signal'] == 'short':
             market_yield = (row_['close'] - row['close']) / row['close'] - market_rate * 2
             part_df = df.loc[(df['timestamp'] > row_['timestamp']) & (df['timestamp'] <= row['timestamp'])]
             max_price = min(part_df.high)
             md = (max_price - row_['close']) / row_['close']
-            l.append([row['date'], row['close'], market_yield, 'short', -1])
             i -= 1
 
         if market_yield < 0:
