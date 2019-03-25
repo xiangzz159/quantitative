@@ -87,15 +87,15 @@ def get_signal(df, params):
                                                                             df['boll'] + df['channel_limit_3'] > df[
                                                                         'close']) & (
                                                                             df['close'] >= df['boll'])) | (
-                                                                               (df['macd'].shift(1) > df[
-                                                                                   'macds'].shift(1)) & (
-                                                                                       df['macd'] < df[
-                                                                                   'macds']) & (
-                                                                                       df['close'].shift(
-                                                                                           1) > df[
-                                                                                           'boll'].shift(
-                                                                                   1)) & (df['close'] <
-                                                                                          df['boll']))),
+                                                                           (df['macd'].shift(1) > df[
+                                                                               'macds'].shift(1)) & (
+                                                                                   df['macd'] < df[
+                                                                               'macds']) & (
+                                                                                   df['close'].shift(
+                                                                                       1) > df[
+                                                                                       'boll'].shift(
+                                                                               1)) & (df['close'] <
+                                                                                      df['boll']))),
         'short', 'wait')
 
     df = boll_macd_ga_tools.public_func(df, 'short', 'signal2')
@@ -169,7 +169,7 @@ if __name__ == '__main__':
     last_trade_price = 0.0
     last_yield = 1.0
 
-    i = 721
+    i = 300
     signal = 'wait'
     signal_num = 0
     last_trade_price = 0.
@@ -190,8 +190,6 @@ if __name__ == '__main__':
                 boll_macd_ga_tools.selection(pops, fit_values)  # 选择
                 boll_macd_ga_tools.crossover(pops, pc)  # 染色体交叉（最优个体之间进行0、1互换）
                 boll_macd_ga_tools.mutation(pops, pm)  # 染色体变异（其实就是随机进行0、1取反
-            # best_fit = min(best_fits)
-            # best_fit_idx = best_fits.index(best_fit)
             last_individual = best_individuals[-1]
 
         df = ori_df[i - 300: i]
@@ -235,6 +233,6 @@ if __name__ == '__main__':
             signal = 'wait'
             side = None
         re_total_yield.append(last_yield)
-        if i % 50 == 0:
+        if i % 100 == 0:
             print('\n', re_total_yield)
         i += 1
