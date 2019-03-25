@@ -87,11 +87,7 @@ def get_signal(df, params):
                                                                             df['boll'] + df['channel_limit_3'] > df[
                                                                         'close']) & (
                                                                             df['close'] >= df['boll'])) | (
-                                                                           (df['macd'].shift(1) > df[
-                                                                               'macds'].shift(1)) & (
-                                                                                   df['macd'] < df[
-                                                                               'macds']) & (
-                                                                                   df['close'].shift(
+                                                                           (df['close'].shift(
                                                                                        1) > df[
                                                                                        'boll'].shift(
                                                                                1)) & (df['close'] <
@@ -148,12 +144,12 @@ def get_signal(df, params):
 if __name__ == '__main__':
     pop_size, chromosome_length = 30, 6
     pops = boll_macd_ga_tools.init_pops(pop_size, chromosome_length)
-    iter = 10  # TODO 迭代次数 10
+    iter = 10
     pc = 0.6  # 杂交概率
     pm = 0.01  # 变异概率
     results = []  # 存储每一代的最优解，N个二元组
     filename = 'BTC2018-04-01-now-1H.csv'
-    lines = list(csv.reader(open(r'/home/centos/quantitative/data/' + filename)))
+    lines = list(csv.reader(open(r'/root/quantitative/data/' + filename)))
     # lines = list(csv.reader(open(r'./data/' + filename)))
     header, values = lines[0], lines[1:]
     data_dict = {h: v for h, v in zip(header, zip(*values))}
@@ -226,7 +222,7 @@ if __name__ == '__main__':
                                                                                                                 last_trade_price -
                                                                                                                 last_row[
                                                                                                                     'close']) / last_trade_price
-            last_yield = last_yield * (1 + earnings - 0.001)
+            last_yield = last_yield * (1 + earnings - 0.00075 * 2)
             last_individual = None
             last_trade_price = 0.0
             signal_num = 0
