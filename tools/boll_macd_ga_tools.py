@@ -344,7 +344,9 @@ async def cal_someone_fitness(df,
                                                                                1) > df[
                                                                                 'boll'].shift(
                                                                                1)) & (df['close'] <
-                                                                                      df['boll']))),
+                                                                                      df['boll']) & (
+                                                                                   df['boll'] - df['close'] > df[
+                                                                               'channel_limit']))),
         'short', 'wait')
 
     df = public_func(df, 'short', 'signal2')
@@ -446,7 +448,7 @@ async def cal_someone_fitness(df,
             md = (row_['close'] - min_price) / row_['close']
 
         elif row['signal'] == 'close_short' and row_['signal'] == 'short':
-            market_yield = (row_['close'] - row['close']) / row['close'] - market_rate *2
+            market_yield = (row_['close'] - row['close']) / row['close'] - market_rate * 2
             part_df = df.loc[(df['timestamp'] > row_['timestamp']) & (df['timestamp'] <= row['timestamp'])]
             max_price = min(part_df.high)
             md = (max_price - row_['close']) / row_['close']

@@ -88,10 +88,12 @@ def get_signal(df, params):
                                                                         'close']) & (
                                                                             df['close'] >= df['boll'])) | (
                                                                            (df['close'].shift(
-                                                                                       1) > df[
-                                                                                       'boll'].shift(
+                                                                               1) > df[
+                                                                                'boll'].shift(
                                                                                1)) & (df['close'] <
-                                                                                      df['boll']))),
+                                                                                      df['boll']) & (
+                                                                                   df['boll'] - df['close'] > df[
+                                                                               'channel_limit']))),
         'short', 'wait')
 
     df = boll_macd_ga_tools.public_func(df, 'short', 'signal2')
