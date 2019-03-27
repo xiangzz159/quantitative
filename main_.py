@@ -169,7 +169,7 @@ if __name__ == '__main__':
     last_trade_price = 0.0
     last_yield = 1.0
 
-    i = 721
+    i = 300
     signal = 'wait'
     signal_num = 0
     last_trade_price = 0.
