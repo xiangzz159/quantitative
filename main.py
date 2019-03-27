@@ -150,7 +150,7 @@ if __name__ == '__main__':
     pc = 0.6  # 杂交概率
     pm = 0.01  # 变异概率
     results = []  # 存储每一代的最优解，N个二元组
-    filename = 'BTC2018-04-01-now-1H.csv'
+    filename = 'BitMEX-180101-190227-1H.csv'
     lines = list(csv.reader(open(r'/root/quantitative/data/' + filename)))
     # lines = list(csv.reader(open(r'./data/' + filename)))
     header, values = lines[0], lines[1:]
