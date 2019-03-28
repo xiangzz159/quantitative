@@ -328,10 +328,9 @@ async def cal_someone_fitness(df,
                 df['close'] <= df['boll_lb'] + df['channel_limit']) & (
                 df['close'] >= df['boll_lb'] - df['channel_limit']), 'long', 'wait')
 
-    df = public_func(df, 'long', 'signal1')
     df['signal1'] = np.where((df['signal'] == 'trend') | ((df['signal1'] == 'wait') & (
-            (df['high'] >= df['signal_boll'] - df['channel_stop_limit']) | (
-            df['low'] <= df['signal_boll_lb'] - df['channel_stop_limit']))), 'close_long', df['signal1'])
+            (df['high'] >= df['boll'] - df['channel_stop_limit']) | (
+            df['low'] <= df['boll_lb'] - df['channel_stop_limit']))), 'close_long', df['signal1'])
 
     # 策略2&4
     df['signal2'] = np.where(
@@ -349,10 +348,9 @@ async def cal_someone_fitness(df,
                                                                                'channel_limit']))),
         'short', 'wait')
 
-    df = public_func(df, 'short', 'signal2')
     df['signal2'] = np.where((df['signal'] == 'trend') | ((df['signal2'] == 'wait') & (
-            (df['low'] <= df['signal_boll_ub'] - df['channel_stop_limit']) | (
-            df['high'] >= df['signal_boll'] + df['channel_stop_limit']))), 'close_short', df['signal2'])
+            (df['low'] <= df['boll_ub'] - df['channel_stop_limit']) | (
+            df['high'] >= df['boll'] + df['channel_stop_limit']))), 'close_short', df['signal2'])
 
     # 策略3&6
     df['signal3'] = np.where(
@@ -373,12 +371,11 @@ async def cal_someone_fitness(df,
         'long',
         'wait')
 
-    df = public_func(df, 'long', 'signal3')
 
     df['signal3'] = np.where(
         (df['signal'] == 'trend') | ((df['signal3'] == 'wait') & (
-                (df['high'] >= df['signal_boll_ub'] - df['channel_stop_limit']) | (
-                df['low'] <= df['signal_boll'] - df['channel_stop_limit']))), 'close_long', df['signal3'])
+                (df['high'] >= df['boll_ub'] - df['channel_stop_limit']) | (
+                df['low'] <= df['boll'] - df['channel_stop_limit']))), 'close_long', df['signal3'])
 
     # 策略5
     df['signal4'] = np.where(
@@ -387,11 +384,10 @@ async def cal_someone_fitness(df,
                 df['close'] >= df['boll_ub']) & (
                 df['close'] <= df['boll_ub'] + df['channel_limit']), 'short', 'wait')
 
-    df = public_func(df, 'short', 'signal4')
 
     df['signal4'] = np.where((df['signal'] == 'trend') | ((df['signal4'] == 'wait') & (
-            (df['low'] <= df['signal_boll'] + df['channel_stop_limit']) | (
-            df['high'] >= df['signal_boll_ub'] + df['channel_stop_limit']))), 'close_short', df['signal4'])
+            (df['low'] <= df['boll'] + df['channel_stop_limit']) | (
+            df['high'] >= df['boll_ub'] + df['channel_stop_limit']))), 'close_short', df['signal4'])
 
     last_signal = 'wait'
     signal_num = -1
@@ -462,50 +458,3 @@ async def cal_someone_fitness(df,
         total_yield += market_yield
 
     return index, 0.5 * (max_drawdown - total_yield)
-
-
-def public_func(df, signal, signal_key):
-    df['signal_boll'] = 0
-    df['signal_boll_lb'] = 0
-    df['signal_boll_ub'] = 0
-    not_wait = len(df.loc[df[signal_key] != 'wait'])
-    df['signal_boll'] = np.where(df[signal_key] == signal, df['boll'], 0)
-    df['signal_boll_lb'] = np.where(df[signal_key] == signal, df['boll_lb'], 0)
-    df['signal_boll_ub'] = np.where(df[signal_key] == signal, df['boll_ub'], 0)
-
-    if not_wait == 0:
-        return df
-
-    df_ = df.loc[df[signal_key] == signal]
-    for i in range(1, len(df_)):
-        row = df_.iloc[i]
-        row_ = df_.iloc[i - 1]
-        df['signal_boll'] = np.where(
-            (df['signal_boll'] == 0) & (df['timestamp'] > row_['timestamp']) & (df['timestamp'] < row['timestamp']),
-            row_['boll'], df['signal_boll'])
-        df['signal_boll_lb'] = np.where(
-            (df['signal_boll_lb'] == 0) & (df['timestamp'] > row_['timestamp']) & (
-                    df['timestamp'] < row['timestamp']),
-            row_['boll_lb'], df['signal_boll_lb'])
-        df['signal_boll_ub'] = np.where(
-            (df['signal_boll_ub'] == 0) & (df['timestamp'] > row_['timestamp']) & (
-                    df['timestamp'] < row['timestamp']),
-            row_['boll_ub'], df['signal_boll_ub'])
-
-    row1 = df.iloc[0]
-    row2 = df_.iloc[len(df_) - 1]
-    df['signal_boll'] = np.where((df['signal_boll'] == 0) & (df['timestamp'] >= row1['timestamp']), row1['boll'],
-                                 df['signal_boll'])
-    df['signal_boll_lb'] = np.where((df['signal_boll_lb'] == 0) & (df['timestamp'] >= row1['timestamp']),
-                                    row1['boll_lb'], df['signal_boll_lb'])
-    df['signal_boll_ub'] = np.where((df['signal_boll_ub'] == 0) & (df['timestamp'] >= row1['timestamp']),
-                                    row1['boll_ub'], df['signal_boll_ub'])
-
-    df['signal_boll'] = np.where((df['timestamp'] > row2['timestamp']), row2['boll'],
-                                 df['signal_boll'])
-    df['signal_boll_lb'] = np.where((df['timestamp'] > row2['timestamp']),
-                                    row2['boll_lb'], df['signal_boll_lb'])
-    df['signal_boll_ub'] = np.where((df['timestamp'] > row2['timestamp']),
-                                    row2['boll_ub'], df['signal_boll_ub'])
-
-    return df

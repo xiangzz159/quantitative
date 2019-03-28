@@ -75,10 +75,9 @@ def get_signal(df, params):
                 df['close'] <= df['boll_lb'] + df['channel_limit']) & (
                 df['close'] >= df['boll_lb'] - df['channel_limit']), 'long', 'wait')
 
-    df = boll_macd_ga_tools_.public_func(df, 'long', 'signal1')
     df['signal1'] = np.where((df['signal'] == 'trend') | ((df['signal1'] == 'wait') & (
-            (df['high'] >= df['signal_boll'] - df['channel_stop_limit']) | (
-            df['low'] <= df['signal_boll_lb'] - df['channel_stop_limit']))), 'close_long', df['signal1'])
+            (df['high'] >= df['boll'] - df['channel_stop_limit']) | (
+            df['low'] <= df['boll_lb'] - df['channel_stop_limit']))), 'close_long', df['signal1'])
 
     # 策略2&4
     df['signal2'] = np.where(
@@ -98,10 +97,9 @@ def get_signal(df, params):
                                                                                           df['boll']))),
         'short', 'wait')
 
-    df = boll_macd_ga_tools_.public_func(df, 'short', 'signal2')
     df['signal2'] = np.where((df['signal'] == 'trend') | ((df['signal2'] == 'wait') & (
-            (df['low'] <= df['signal_boll_ub'] - df['channel_stop_limit']) | (
-            df['high'] >= df['signal_boll'] + df['channel_stop_limit']))), 'close_short', df['signal2'])
+            (df['low'] <= df['boll_ub'] - df['channel_stop_limit']) | (
+            df['high'] >= df['boll'] + df['channel_stop_limit']))), 'close_short', df['signal2'])
 
     # 策略3&6
     df['signal3'] = np.where(
@@ -122,12 +120,11 @@ def get_signal(df, params):
         'long',
         'wait')
 
-    df = boll_macd_ga_tools_.public_func(df, 'long', 'signal3')
 
     df['signal3'] = np.where(
         (df['signal'] == 'trend') | ((df['signal3'] == 'wait') & (
-                (df['high'] >= df['signal_boll_ub'] - df['channel_stop_limit']) | (
-                df['low'] <= df['signal_boll'] - df['channel_stop_limit']))), 'close_long', df['signal3'])
+                (df['high'] >= df['boll_ub'] - df['channel_stop_limit']) | (
+                df['low'] <= df['boll'] - df['channel_stop_limit']))), 'close_long', df['signal3'])
 
     # 策略5
     df['signal4'] = np.where(
@@ -136,11 +133,10 @@ def get_signal(df, params):
                 df['close'] >= df['boll_ub']) & (
                 df['close'] <= df['boll_ub'] + df['channel_limit']), 'short', 'wait')
 
-    df = boll_macd_ga_tools_.public_func(df, 'short', 'signal4')
 
     df['signal4'] = np.where((df['signal'] == 'trend') | ((df['signal4'] == 'wait') & (
-            (df['low'] <= df['signal_boll'] + df['channel_stop_limit']) | (
-            df['high'] >= df['signal_boll_ub'] + df['channel_stop_limit']))), 'close_short', df['signal4'])
+            (df['low'] <= df['boll'] + df['channel_stop_limit']) | (
+            df['high'] >= df['boll_ub'] + df['channel_stop_limit']))), 'close_short', df['signal4'])
 
     return df.iloc[-1]
 
