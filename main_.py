@@ -31,8 +31,8 @@ def get_signal(df, params):
     trend_C = 0.05
     stop_trade_times = 5
     ts = 3600
-    boll_macd_ga_tools._get_boll(df, stock, boll_A, boll_std_len)
-    boll_macd_ga_tools._get_macd(df, stock, macd_fast_len, macd_slow_len)
+    boll_macd_ga_tools_._get_boll(df, stock, boll_A, boll_std_len)
+    boll_macd_ga_tools_._get_macd(df, stock, macd_fast_len, macd_slow_len)
 
     # 通道宽度
     df['boll_width'] = abs(df['boll_ub'] - df['boll_lb'])
