@@ -152,6 +152,7 @@ if __name__ == '__main__':
     data_dict = {h: v for h, v in zip(header, zip(*values))}
     ori_df = pd.DataFrame(data_dict)
     ori_df = ori_df.astype(float)
+    ori_df['Timestamp'] = ori_df['Timestamp'] / 1000
     ori_df['Timestamp'] = ori_df['Timestamp'].astype(int)
     ori_df['date'] = pd.to_datetime(ori_df['Timestamp'], unit='s')
     ori_df.index = ori_df.date
