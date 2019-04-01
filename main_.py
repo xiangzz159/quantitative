@@ -154,8 +154,8 @@ if __name__ == '__main__':
     pm = 0.01  # 变异概率
     results = []  # 存储每一代的最优解，N个二元组
     filename = 'BitMEX-180101-190227-1H.csv'
-    # lines = list(csv.reader(open(r'/home/centos/quantitative/data/' + filename)))
-    lines = list(csv.reader(open(r'./data/' + filename)))
+    lines = list(csv.reader(open(r'/home/centos/quantitative/data/' + filename)))
+    # lines = list(csv.reader(open(r'./data/' + filename)))
     header, values = lines[0], lines[1:]
     data_dict = {h: v for h, v in zip(header, zip(*values))}
     ori_df = pd.DataFrame(data_dict)
