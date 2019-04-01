@@ -78,6 +78,17 @@ def binary2decimal(binary, lower_limit, upper_limit, chromosome_length):
     return t
 
 
+"""
+volatility_ = 0.001
+stop_limit_ = binary2decimal(pops[6][i], 0.01, 0.1, chromosome_length)
+trend_A1_ = 0.3
+trend_A2_ = 0.02
+trend_B_ = 0.04
+trend_C_ = 0.05
+stop_trade_times_ = 5
+"""
+
+
 # 初始化种群
 def init_pops(pop_size=50, chromosome_length=6):
     boll_A = init_population(pop_size, chromosome_length)  # BOLL 波动率倍数 1.5~3
@@ -85,27 +96,14 @@ def init_pops(pop_size=50, chromosome_length=6):
     macd_fast_len = init_population(pop_size, chromosome_length)  # MACD 快线长度 8~16
     macd_slow_len = init_population(pop_size, chromosome_length)  # MACD 慢线长度 20~30
     boll_width_threshold = init_population(pop_size, chromosome_length)  # BOLL 通道阈值 0.05~0.15
-    volatility = init_population(pop_size, chromosome_length)  # 波动率下单 0.0008~0.0012
     stop_limit = init_population(pop_size, chromosome_length)  # 止盈止损阈值 0.01~0.1
-    # 趋势判断阈值
-    trend_A1 = init_population(pop_size, chromosome_length)  # 0~0.3
-    trend_A2 = init_population(pop_size, chromosome_length)  # 0~0.02
-    trend_B = init_population(pop_size, chromosome_length)  # 0~0.04
-    trend_C = init_population(pop_size, chromosome_length)  # 0~0.05
-    stop_trade_times = init_population(pop_size, chromosome_length)  # 6~24
     return [
         boll_A,
         boll_std_len,
         macd_fast_len,
         macd_slow_len,
         boll_width_threshold,
-        volatility,
-        stop_limit,
-        trend_A1,
-        trend_A2,
-        trend_B,
-        trend_C,
-        stop_trade_times
+        stop_limit
     ]
 
 
@@ -215,17 +213,10 @@ def find_best(pop, fit_values, chromosome_length=6):
     macd_fast_len_ = int(binary2decimal(pop[2][best_fit_idx], 8, 16, chromosome_length))
     macd_slow_len_ = int(binary2decimal(pop[3][best_fit_idx], 20, 30, chromosome_length))
     boll_width_threshold_ = binary2decimal(pop[4][best_fit_idx], 0.05, 0.15, chromosome_length)
-    volatility_ = binary2decimal(pop[5][best_fit_idx], 0.0005, 0.0015, chromosome_length)
-    stop_limit_ = binary2decimal(pop[6][best_fit_idx], 0.01, 0.1, chromosome_length)
-    trend_A1_ = binary2decimal(pop[7][best_fit_idx], 0.2, 0.35, chromosome_length)
-    trend_A2_ = binary2decimal(pop[8][best_fit_idx], 0.01, 0.025, chromosome_length)
-    trend_B_ = binary2decimal(pop[9][best_fit_idx], 0.02, 0.045, chromosome_length)
-    trend_C_ = binary2decimal(pop[10][best_fit_idx], 0.03, 0.055, chromosome_length)
-    stop_trade_times_ = int(binary2decimal(pop[11][best_fit_idx], 6, 12, chromosome_length))
+    stop_limit_ = binary2decimal(pop[5][best_fit_idx], 0.01, 0.1, chromosome_length)
     # 用来存最优基因编码
     best_individual = [boll_A_, boll_std_len_, macd_fast_len_, macd_slow_len_,
-                       boll_width_threshold_, volatility_, stop_limit_, trend_A1_, trend_A2_,
-                       trend_B_, trend_C_, stop_trade_times_]
+                       boll_width_threshold_, stop_limit_]
     return best_individual, best_fit
 
 
@@ -241,18 +232,10 @@ def cal_fitness(df, pops, pop_size=50, chromosome_length=6):
         macd_fast_len_ = int(binary2decimal(pops[2][i], 8, 16, chromosome_length))
         macd_slow_len_ = int(binary2decimal(pops[3][i], 20, 30, chromosome_length))
         boll_width_threshold_ = binary2decimal(pops[4][i], 0.05, 0.15, chromosome_length)
-        volatility_ = binary2decimal(pops[5][i], 0.0009, 0.0011, chromosome_length)
-        stop_limit_ = binary2decimal(pops[6][i], 0.01, 0.1, chromosome_length)
-        trend_A1_ = binary2decimal(pops[7][i], 0.2, 0.35, chromosome_length)
-        trend_A2_ = binary2decimal(pops[8][i], 0.01, 0.025, chromosome_length)
-        trend_B_ = binary2decimal(pops[9][i], 0.02, 0.045, chromosome_length)
-        trend_C_ = binary2decimal(pops[10][i], 0.03, 0.055, chromosome_length)
-        stop_trade_times_ = int(binary2decimal(pops[11][i], 6, 12, chromosome_length))
+        stop_limit_ = binary2decimal(pops[5][i], 0.01, 0.1, chromosome_length)
         async_funcs.append(cal_someone_fitness(df_, stock, i, boll_A_, boll_std_len_, macd_fast_len_,
                                                macd_slow_len_,
-                                               boll_width_threshold_, volatility_, stop_limit_, trend_A1_,
-                                               trend_A2_,
-                                               trend_B_, trend_C_, stop_trade_times_))
+                                               boll_width_threshold_, stop_limit_))
     loop = asyncio.get_event_loop()
     re = loop.run_until_complete(asyncio.gather(*async_funcs))
     n = len(re)
@@ -274,15 +257,16 @@ async def cal_someone_fitness(df,
                               macd_fast_len,
                               macd_slow_len,
                               boll_width_threshold,
-                              volatility,
                               stop_limit,
-                              trend_A1,
-                              trend_A2,
-                              trend_B,
-                              trend_C,
-                              stop_trade_times,
                               ts=3600,
-                              data_len=-96):
+                              data_len=-168):
+    volatility = 0.001
+    trend_A1 = 0.3
+    trend_A2 = 0.02
+    trend_B = 0.04
+    trend_C = 0.05
+    stop_trade_times = 5
+
     # 获得macd，boll指标
     _get_boll(df, stock, boll_A, boll_std_len)
     _get_macd(df, stock, macd_fast_len, macd_slow_len)
@@ -317,7 +301,7 @@ async def cal_someone_fitness(df,
     df['signal'] = np.where(df['signal'] == 'can_not_trade', 'trend', df['signal'])
 
     df['channel_limit'] = df['boll_width'] * boll_width_threshold
-    df['channel_limit_3'] = df['channel_limit'] * 3
+    df['channel_limit_4'] = df['channel_limit'] * 4
 
     # 去掉数据错误记录
     df = df[data_len:]
@@ -326,68 +310,74 @@ async def cal_someone_fitness(df,
     df['signal1'] = np.where(
         (df['signal'] == 'wait') & (df['change'] >= volatility) & (df['boll_lb'].shift(1) <= df['close'].shift(1)) & (
                 df['close'].shift(1) <= df['boll'].shift(1)) & (
-                df['close'] <= df['boll_lb'] + df['channel_limit']) & (
-                df['close'] >= df['boll_lb'] - df['channel_limit']), 'long', 'wait')
+                df['close'] <= df['boll_lb'] + df['channel_limit']), 'long', 'wait')
 
+    df = public_func(df, 'long', 'signal1')
     df['signal1'] = np.where((df['signal'] == 'trend') | ((df['signal1'] == 'wait') & (
-            (df['high'] >= df['boll'] - df['channel_stop_limit']) | (
-            df['low'] <= df['boll_lb'] - df['channel_stop_limit']))), 'close_long', df['signal1'])
+            (df['high'] >= df['signal_boll'] - df['channel_stop_limit']) | (
+            df['low'] <= df['signal_boll_lb'] - df['channel_stop_limit']))), 'close_long', df['signal1'])
 
-    # 策略2
+    # 策略2&4
     df['signal2'] = np.where(
-        (df['signal'] == 'wait') & (df['change'] >= volatility) & ((df['boll'].shift(1) >= df['close'].shift(1)) & (
-                df['close'].shift(1) >= df['boll_lb'].shift(1)) & (df['boll'] + df['channel_limit_3'] > df['close'])
-                                                                   & (df['close'] >= df['boll'])), 'short', 'wait')
+        (df['signal'] == 'wait') & (df['change'] >= volatility) & (((df['boll'].shift(1) >= df['close'].shift(1)) & (
+                df['close'].shift(1) >= df['boll_lb'].shift(1)) & (
+                                                                            df['boll'] + df['channel_limit_4'] > df[
+                                                                        'close']) & (
+                                                                            df['close'] >= df['boll'] + df[
+                                                                        'channel_limit'])) | (
+                                                                           (df['macd'].shift(1) > df[
+                                                                               'macds'].shift(1)) & (
+                                                                                   df['macd'] < df[
+                                                                               'macds']) & (
+                                                                                   df['close'].shift(
+                                                                                       1) > df[
+                                                                                       'boll'].shift(
+                                                                               1)) & (df['close'] <
+                                                                                      df['boll']))),
+        'short', 'wait')
 
+    df = public_func(df, 'short', 'signal2')
     df['signal2'] = np.where((df['signal'] == 'trend') | ((df['signal2'] == 'wait') & (
-            (df['low'] <= df['boll_ub'] - df['channel_stop_limit']) | (
-            df['high'] >= df['boll'] + df['channel_stop_limit']))), 'close_short', df['signal2'])
+            (df['low'] <= df['signal_boll_ub'] - df['channel_stop_limit']) | (
+            df['high'] >= df['signal_boll'] + df['channel_stop_limit']))), 'close_short', df['signal2'])
 
-    # 策略3
+    # 策略3&6
     df['signal3'] = np.where(
-        (df['signal'] == 'wait') & (df['change'] >= volatility) & ((df['macd'].shift(1) <= df['macds'].shift(1)) & (
-                df['macd'] > df['macds']) & (df['close'].shift(1) < df['boll'].shift(1))
-                                                                   & (df['close'] > df['boll'])), 'long', 'wait')
+        (df['signal'] == 'wait') & (df['change'] >= volatility) & (((df['boll'].shift(1) <= df['close'].shift(1)) & (
+                df['close'].shift(1) <= df['boll_ub'].shift(1)) & (
+                                                                            df['boll'] + df['channel_limit_4'] > df[
+                                                                        'close']) & (
+                                                                            df['close'] >= df['boll'] + df[
+                                                                        'channel_limit'])) | ((df['macd'].shift(1) <=
+                                                                                               df['macds'].shift(1)) & (
+                                                                                                      df['macd'] > df[
+                                                                                                  'macds']) & (
+                                                                                                      df['close'].shift(
+                                                                                                          1) < df[
+                                                                                                          'boll'].shift(
+                                                                                                  1)) & (df['close'] >
+                                                                                                         df['boll']))),
+        'long',
+        'wait')
+
+    df = public_func(df, 'long', 'signal3')
 
     df['signal3'] = np.where(
         (df['signal'] == 'trend') | ((df['signal3'] == 'wait') & (
-                (df['high'] >= df['boll_ub'] - df['channel_stop_limit']) |
-                (df['low'] <= df['boll'] - df['channel_stop_limit']))), 'close_long', df['signal3'])
-
-    # 策略4
-    df['signal4'] = np.where(
-        (df['signal'] == 'wait') & (df['change'] >= volatility) & ((df['close'].shift(1) > df['boll'].shift(1))
-                                                                   & (df['close'] < df['boll']) & (
-                                                                           df['boll'] - df['close'] > df[
-                                                                       'channel_limit'])),
-        'short', 'wait')
-
-    df['signal4'] = np.where((df['signal'] == 'trend') | ((df['signal4'] == 'wait') & (
-            (df['low'] <= df['boll_ub'] - df['channel_stop_limit']) | (
-            df['high'] >= df['boll'] + df['channel_stop_limit']))), 'close_short', df['signal4'])
+                (df['high'] >= df['signal_boll_ub'] - df['channel_stop_limit']) | (
+                df['low'] <= df['signal_boll'] - df['channel_stop_limit']))), 'close_long', df['signal3'])
 
     # 策略5
-    df['signal5'] = np.where(
+    df['signal4'] = np.where(
         (df['signal'] == 'wait') & (df['change'] >= volatility) & (df['boll_ub'].shift(1) >= df['close'].shift(1)) & (
                 df['close'].shift(1) >= df['boll'].shift(1)) & (
-                df['close'] >= df['boll_ub']) & (
-                df['close'] <= df['boll_ub'] + df['channel_limit']), 'short', 'wait')
+                df['close'] >= df['boll_ub'] + df['channel_limit']), 'short', 'wait')
 
-    df['signal5'] = np.where((df['signal'] == 'trend') | ((df['signal5'] == 'wait') & (
-            (df['low'] <= df['boll'] + df['channel_stop_limit']) | (
-            df['high'] >= df['boll_ub'] + df['channel_stop_limit']))), 'close_short', df['signal5'])
+    df = public_func(df, 'short', 'signal4')
 
-    # 策略6
-    df['signal6'] = np.where(
-        (df['signal'] == 'wait') & (df['change'] >= volatility) & ((df['boll'].shift(1) <= df['close'].shift(1)) & (
-                df['close'].shift(1) <= df['boll_ub'].shift(1)) & (df['boll'] + df['channel_limit_3'] > df['close'])
-                                                                   & (df['close'] >= df['boll'] - df['channel_limit'])),
-        'long', 'wait')
-
-    df['signal6'] = np.where(
-        (df['signal'] == 'trend') | ((df['signal6'] == 'wait') & (
-                (df['high'] >= df['boll_ub'] - df['channel_stop_limit']) | (
-                df['low'] <= df['boll'] - df['channel_stop_limit']))), 'close_long', df['signal6'])
+    df['signal4'] = np.where((df['signal'] == 'trend') | ((df['signal4'] == 'wait') & (
+            (df['low'] <= df['signal_boll'] + df['channel_stop_limit']) | (
+            df['high'] >= df['signal_boll_ub'] + df['channel_stop_limit']))), 'close_short', df['signal4'])
 
     last_signal = 'wait'
     signal_num = -1
@@ -412,8 +402,6 @@ async def cal_someone_fitness(df,
     del df['signal2']
     del df['signal3']
     del df['signal4']
-    del df['signal5']
-    del df['signal6']
     del df['channel_limit']
     del df['channel_stop_limit']
     del df['change']
@@ -482,3 +470,50 @@ async def cal_someone_fitness(df,
 
     result = 0.5 * (max_drawdown - total_yield)
     return index, result
+
+
+def public_func(df, signal, signal_key):
+    df['signal_boll'] = 0
+    df['signal_boll_lb'] = 0
+    df['signal_boll_ub'] = 0
+    not_wait = len(df.loc[df[signal_key] != 'wait'])
+    df['signal_boll'] = np.where(df[signal_key] == signal, df['boll'], 0)
+    df['signal_boll_lb'] = np.where(df[signal_key] == signal, df['boll_lb'], 0)
+    df['signal_boll_ub'] = np.where(df[signal_key] == signal, df['boll_ub'], 0)
+
+    if not_wait == 0:
+        return df
+
+    df_ = df.loc[df[signal_key] == signal]
+    for i in range(1, len(df_)):
+        row = df_.iloc[i]
+        row_ = df_.iloc[i - 1]
+        df['signal_boll'] = np.where(
+            (df['signal_boll'] == 0) & (df['timestamp'] > row_['timestamp']) & (df['timestamp'] < row['timestamp']),
+            row_['boll'], df['signal_boll'])
+        df['signal_boll_lb'] = np.where(
+            (df['signal_boll_lb'] == 0) & (df['timestamp'] > row_['timestamp']) & (
+                    df['timestamp'] < row['timestamp']),
+            row_['boll_lb'], df['signal_boll_lb'])
+        df['signal_boll_ub'] = np.where(
+            (df['signal_boll_ub'] == 0) & (df['timestamp'] > row_['timestamp']) & (
+                    df['timestamp'] < row['timestamp']),
+            row_['boll_ub'], df['signal_boll_ub'])
+
+    row1 = df.iloc[0]
+    row2 = df_.iloc[len(df_) - 1]
+    df['signal_boll'] = np.where((df['signal_boll'] == 0) & (df['timestamp'] >= row1['timestamp']), row1['boll'],
+                                 df['signal_boll'])
+    df['signal_boll_lb'] = np.where((df['signal_boll_lb'] == 0) & (df['timestamp'] >= row1['timestamp']),
+                                    row1['boll_lb'], df['signal_boll_lb'])
+    df['signal_boll_ub'] = np.where((df['signal_boll_ub'] == 0) & (df['timestamp'] >= row1['timestamp']),
+                                    row1['boll_ub'], df['signal_boll_ub'])
+
+    df['signal_boll'] = np.where((df['timestamp'] > row2['timestamp']), row2['boll'],
+                                 df['signal_boll'])
+    df['signal_boll_lb'] = np.where((df['timestamp'] > row2['timestamp']),
+                                    row2['boll_lb'], df['signal_boll_lb'])
+    df['signal_boll_ub'] = np.where((df['timestamp'] > row2['timestamp']),
+                                    row2['boll_ub'], df['signal_boll_ub'])
+
+    return df
