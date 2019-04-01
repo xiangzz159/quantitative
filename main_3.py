@@ -68,7 +68,7 @@ def get_signal(df, params):
     df['signal'] = np.where(df['signal'] == 'can_not_trade', 'trend', df['signal'])
 
     df['channel_limit'] = df['boll_width'] * boll_width_threshold
-    df['channel_limit_3'] = df['channel_limit'] * 3
+    df['channel_limit_4'] = df['channel_limit'] * 4
 
     # 策略1
     df['signal1'] = np.where(
@@ -154,8 +154,8 @@ if __name__ == '__main__':
     pm = 0.01  # 变异概率
     results = []  # 存储每一代的最优解，N个二元组
     filename = 'BitMEX-180101-190227-1H.csv'
-    # lines = list(csv.reader(open(r'/root/quantitative/data/' + filename)))
-    lines = list(csv.reader(open(r'./data/' + filename)))
+    lines = list(csv.reader(open(r'/root/quantitative/data/' + filename)))
+    # lines = list(csv.reader(open(r'./data/' + filename)))
     header, values = lines[0], lines[1:]
     data_dict = {h: v for h, v in zip(header, zip(*values))}
     ori_df = pd.DataFrame(data_dict)
