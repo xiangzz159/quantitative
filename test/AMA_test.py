@@ -34,12 +34,11 @@ df.index = df.date
 
 stock = StockDataFrame.retype(df)
 
-n = 21
 # 1. 价格方向
-df['direction'] = df['close'] - df['close'].shift(n)
+df['direction'] = df['close'] - df['close'].shift(10)
 # 2. 波动性
 df['price_diff'] = abs(df['close'] - df['close'].shift(1))
-df['volatility'] = df['price_diff'].rolling(center=False, window=n).sum()
+df['volatility'] = df['price_diff'].rolling(center=False, window=10).sum()
 # 3. 效率系数 ER
 df['ER'] = df['direction'] / df['volatility']
 # 4. 变换上述系数为趋势速度
@@ -47,7 +46,7 @@ fastest = 2 / (2 + 1)
 slowest = 2 / (30 + 1)
 df['smooth'] = df['ER'] * (fastest - slowest) + slowest
 df['smooth'] = df['smooth'] ** 2
-df = df[30:]
+df = df[20:]
 ama = 0
 arr = [0]
 for i in range(1, len(df)):
@@ -56,20 +55,10 @@ for i in range(1, len(df)):
     arr.append(ama)
 
 df['ama'] = np.array(arr)
-
-# df['ama_diff'] = df['ama_'] - df['ama_'].shift(1)
-# df['filter'] = 0.1 * df['ama_diff'].rolling(center=False, window=n).std()
-# df['ama_min'] = df['ama_'].rolling(center=False, window=n).min()
-# df['ama_max'] = df['ama_'].rolling(center=False, window=n).max()
-# df['signal'] = 'wait'
-# df['signal'] = np.where((df['signal'] == 'wait') & (df['ama_'] - df['ama_min'] > df['filter']), 'long', df['signal'])
-# df['signal'] = np.where((df['signal'] == 'wait') & (df['ama_max'] - df['ama_'] > df['filter']), 'short', df['signal'])
+df = df[40:]
 
 
-# df[['close', 'direction', 'price_diff', 'volatility', 'ER']].to_csv('../data/data.csv', index=False)
 
-plt.plot(df['close'])
-plt.plot(df['ama'])
 
 
 # ax = df[['close', 'ama']].plot(figsize=(20, 10), grid=True, xticks=df.index, rot=90, subplots=True, style='b')
@@ -78,4 +67,4 @@ plt.plot(df['ama'])
 # ax[0].set_xticklabels(df.index[::interval])
 # plt.setp(plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
 # ax[0].set_title('Title')
-plt.show()
+# plt.show()
