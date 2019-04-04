@@ -212,7 +212,7 @@ def find_best(pop, fit_values, chromosome_length=6):
     boll_std_len_ = int(binary2decimal(pop[1][best_fit_idx], 14, 30, chromosome_length))
     macd_fast_len_ = int(binary2decimal(pop[2][best_fit_idx], 8, 16, chromosome_length))
     macd_slow_len_ = int(binary2decimal(pop[3][best_fit_idx], 20, 30, chromosome_length))
-    boll_width_threshold_ = binary2decimal(pop[4][best_fit_idx], 0.05, 0.15, chromosome_length)
+    boll_width_threshold_ = binary2decimal(pop[4][best_fit_idx], 0.05, 0.085, chromosome_length)
     stop_limit_ = binary2decimal(pop[5][best_fit_idx], 0.01, 0.1, chromosome_length)
     # 用来存最优基因编码
     best_individual = [boll_A_, boll_std_len_, macd_fast_len_, macd_slow_len_,
@@ -231,7 +231,7 @@ def cal_fitness(df, pops, pop_size=50, chromosome_length=6):
         boll_std_len_ = int(binary2decimal(pops[1][i], 14, 30, chromosome_length))
         macd_fast_len_ = int(binary2decimal(pops[2][i], 8, 16, chromosome_length))
         macd_slow_len_ = int(binary2decimal(pops[3][i], 20, 30, chromosome_length))
-        boll_width_threshold_ = binary2decimal(pops[4][i], 0.05, 0.15, chromosome_length)
+        boll_width_threshold_ = binary2decimal(pops[4][i], 0.05, 0.085, chromosome_length)
         stop_limit_ = binary2decimal(pops[5][i], 0.01, 0.1, chromosome_length)
         async_funcs.append(cal_someone_fitness(df_, stock, i, boll_A_, boll_std_len_, macd_fast_len_,
                                                macd_slow_len_,
