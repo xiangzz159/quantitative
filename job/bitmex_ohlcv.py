@@ -43,5 +43,6 @@ for i in range(count):
 data = np.array(klines[0])
 for i in range(1, len(klines)):
     data = np.append(data, klines[i], axis=0)
-df = pd.DataFrame(data, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+df = pd.DataFrame(data, columns=['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume'])
+df['Timestamp'] = df['Timestamp'] / 1000
 df.to_csv('/home/centos/BitMEX-180101-190227-1H.csv', index=False)
