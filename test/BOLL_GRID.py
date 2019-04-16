@@ -22,7 +22,6 @@ import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 import random
 from datetime import datetime
-
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
@@ -34,85 +33,75 @@ df['date'] = pd.to_datetime(df['timestamp'], unit='s')
 df.index = df.date
 stock['boll']
 df['signal'] = 'wait'
+# 参数设置
+trend_A1 = 0.3
+trend_A2 = 0.02
+trend_B = 0.04
+trend_C = 0.05
+stop_trade_times = 5
+ts = 3600
+std_percentage = 0.9
+w = 50
 
+# 通道宽度
+df['boll_width'] = abs(df['boll_ub'] - df['boll_lb'])
+# 单次涨跌幅
+df['change'] = abs((df['close'] - df['close'].shift(1)) / df['close'].shift(1))
+# 两次涨幅
+df['change_2'] = abs((df['close'] - df['close'].shift(2)) / df['close'].shift(2))
+# 趋势判断A：超过通道一定幅度且单次涨幅超过一定幅度
+df['signal'] = np.where(((df['close'] > df['boll_ub'] + df['boll_width'] * trend_A1) | (
+        df['close'] < df['boll_lb'] - df['boll_width'] * trend_A1)) & (df['change'] > trend_A2), 'trend',
+                        df['signal'])
+# 趋势判断B：单次涨幅累计超过一定幅度
+df['signal'] = np.where(df['change'] > trend_B, 'trend', df['signal'])
+# 趋势判断C：两次涨幅累计超过一定幅度
+df['signal'] = np.where(df['change_2'] > trend_C, 'trend', df['signal'])
 
-def analysis(df):
-    # 参数设置
-    trend_A1 = 0.3
-    trend_A2 = 0.02
-    trend_B = 0.04
-    trend_C = 0.05
-    stop_trade_times = 10
-    ts = 3600
-    std_percentage = 0.9
-
-    # 通道宽度
-    df['boll_width'] = abs(df['boll_ub'] - df['boll_lb'])
-    # 单次涨跌幅
-    df['change'] = abs((df['close'] - df['close'].shift(1)) / df['close'].shift(1))
-    # 趋势判断A：超过通道一定幅度且单次涨幅超过一定幅度
-    df['signal'] = np.where(((df['close'] > df['boll_ub'] + df['boll_width'] * trend_A1) | (
-            df['close'] < df['boll_lb'] - df['boll_width'] * trend_A1)) & (df['change'] > trend_A2), 'trend',
+for i in range(stop_trade_times):
+    df['signal'] = np.where((df['signal'] == 'wait') & (df['signal'].shift(1 + i) == 'trend'), 'can_not_trade',
                             df['signal'])
-    # 趋势判断B：单次涨幅累计超过一定幅度
-    df['signal'] = np.where(df['change'] > trend_B, 'trend', df['signal'])
-    # 趋势判断C：两次涨幅累计超过一定幅度
-    df['signal'] = np.where(df['change'] + df['change'].shift(1) > trend_C, 'trend', df['signal'])
-    trend_df = df.loc[df['signal'] != 'wait']
-    tts = []
-    last_row_timestamp = df.iloc[-1]['timestamp']
-    for idx, row in trend_df.iterrows():
-        last_timestamp = tts[-1].timestamp() if len(tts) > 0 else 0
-        t = idx.timestamp()
-        for i in range(stop_trade_times):
-            if t + (i + 1) * ts > last_timestamp and t + (i + 1) * ts <= last_row_timestamp:
-                tts.append(pd.Timestamp(datetime.utcfromtimestamp(t + (i + 1) * ts)))
-    if len(tts) > 0:
-        df.loc[tts, 'signal'] = 'can_not_trade'
-    df['signal'] = np.where(df['signal'] == 'can_not_trade', 'trend', df['signal'])
-    w = 50
-    df['close'] = df['open']
-    df['close_mean'] = df['close'].rolling(
-        center=False, window=w).mean()
-    df['close_std'] = df['close'].rolling(
-        center=False, window=w).std()
-    df = df[w:]
-    size = 6
-    df['grid'] = 0
-    for i in range(size, 0, -1):
-        df['grid'] = np.where((df['grid'] == 0) & (df['close'] > df['close_mean'] + df['close_std'] * i), i,
-                              df['grid'])
-        df['grid'] = np.where((df['grid'] == 0) & (df['close'] < df['close_mean'] - df['close_std'] * i), -i,
-                              df['grid'])
-    df['close_std'] = df['close_std'] * std_percentage
+df['signal'] = np.where(df['signal'] == 'can_not_trade', 'trend', df['signal'])
+df['close'] = df['open']
+df['close_mean'] = df['close'].rolling(
+    center=False, window=w).mean()
+df['close_std'] = df['close'].rolling(
+    center=False, window=w).std()
+size = 6
+df['grid'] = 0
+for i in range(size, 0, -1):
+    df['grid'] = np.where((df['grid'] == 0) & (df['close'] > df['close_mean'] + df['close_std'] * i), i,
+                          df['grid'])
+    df['grid'] = np.where((df['grid'] == 0) & (df['close'] < df['close_mean'] - df['close_std'] * i), -i,
+                          df['grid'])
+df['close_std'] = df['close_std'] * std_percentage
 
-    # 策略1
-    df['signal'] = np.where(
-        (df['signal'] == 'wait') & (df['close'].shift(1) < df['boll'].shift(1) + df['close_std'].shift(1)) & (
-                df['close'] > df['boll'] + df['close_std']), 'long', df['signal'])
-    df['signal'] = np.where(
-        (df['signal'] == 'wait') & (df['close'].shift(1) > df['boll'].shift(1) + df['close_std'].shift(1)) & (
-                df['close'] < df['boll'] + df['close_std']), 'close_long', df['signal'])
-    # 策略2
-    df['signal'] = np.where(
-        (df['signal'] == 'wait') & (df['close'].shift(1) > df['boll'].shift(1) - df['close_std'].shift(1)) & (
-                df['close'] < df['boll'] - df['close_std']), 'short', df['signal'])
-    df['signal'] = np.where(
-        (df['signal'] == 'wait') & (df['close'].shift(1) < df['boll'].shift(1) - df['close_std'].shift(1)) & (
-                df['close'] > df['boll'] - df['close_std']), 'close_short', df['signal'])
-    # 策略3
-    df['signal'] = np.where(
-        (df['signal'] == 'wait') & (df['close'] > df['boll_ub'] - df['close_std']) & (df['grid'] > 0) & (
-                df['grid'] < 4),
-        'short', df['signal'])
-    # 策略4
-    df['signal'] = np.where(
-        (df['signal'] == 'wait') & (df['close'] < df['boll_ub'] + df['close_std']) & (df['grid'] < 0) & (
-                df['grid'] > -4),
-        'long', df['signal'])
-    return df.iloc[-1]
+# 策略1
+df['signal'] = np.where(
+    (df['signal'] == 'wait') & (df['close'].shift(1) < df['boll'].shift(1) + df['close_std'].shift(1)) & (
+            df['close'] > df['boll'] + df['close_std']), 'long', df['signal'])
+df['signal'] = np.where(
+    (df['signal'] == 'wait') & (df['close'].shift(1) > df['boll'].shift(1) + df['close_std'].shift(1)) & (
+            df['close'] < df['boll'] + df['close_std']), 'close_long', df['signal'])
+# 策略2
+df['signal'] = np.where(
+    (df['signal'] == 'wait') & (df['close'].shift(1) > df['boll'].shift(1) - df['close_std'].shift(1)) & (
+            df['close'] < df['boll'] - df['close_std']), 'short', df['signal'])
+df['signal'] = np.where(
+    (df['signal'] == 'wait') & (df['close'].shift(1) < df['boll'].shift(1) - df['close_std'].shift(1)) & (
+            df['close'] > df['boll'] - df['close_std']), 'close_short', df['signal'])
+# 策略3
+df['signal'] = np.where(
+    (df['signal'] == 'wait') & (df['close'] > df['boll_ub'] - df['close_std']) & (df['grid'] > 0) & (
+            df['grid'] < 4),
+    'short', df['signal'])
+# 策略4
+df['signal'] = np.where(
+    (df['signal'] == 'wait') & (df['close'] < df['boll_ub'] + df['close_std']) & (df['grid'] < 0) & (
+            df['grid'] > -4),
+    'long', df['signal'])
 
-
+df = df[100:]
 # 账户BTC数量
 btc_amount = 1
 # 网格权重
@@ -132,10 +121,8 @@ positions = []
 last_grid = 0
 cost = 0
 btc_amounts = []
-for idx in range(500, len(df)):
+for idx, row in df.iterrows():
     btc_amounts.append(btc_amount)
-    df_ = df[idx - 500:idx]
-    row = analysis(df_)
     print(idx, row['signal'], row['grid'], row['close'])
     if row['signal'] in ['long_', 'short_'] and side == 'wait':
         avg_price = row['close']
