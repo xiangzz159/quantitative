@@ -41,9 +41,9 @@ trend_B = 0.04
 trend_C = 0.05
 stop_trade_times = 5
 ts = 3600
-std_percentage = 0.3
+std_percentage = 0.6
 w = 200
-volatility = 0.0015
+volatility = 0.001
 
 # 通道宽度
 df['boll_width'] = abs(df['boll_ub'] - df['boll_lb'])
