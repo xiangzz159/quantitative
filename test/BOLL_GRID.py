@@ -22,6 +22,7 @@ import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 import random
 from datetime import datetime
+
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
@@ -40,8 +41,9 @@ trend_B = 0.04
 trend_C = 0.05
 stop_trade_times = 5
 ts = 3600
-std_percentage = 0.9
-w = 50
+std_percentage = 0.3
+w = 200
+volatility = 0.0015
 
 # 通道宽度
 df['boll_width'] = abs(df['boll_ub'] - df['boll_lb'])
@@ -67,114 +69,92 @@ df['close_mean'] = df['close'].rolling(
     center=False, window=w).mean()
 df['close_std'] = df['close'].rolling(
     center=False, window=w).std()
-size = 6
-df['grid'] = 0
-for i in range(size, 0, -1):
-    df['grid'] = np.where((df['grid'] == 0) & (df['close'] > df['close_mean'] + df['close_std'] * i), i,
-                          df['grid'])
-    df['grid'] = np.where((df['grid'] == 0) & (df['close'] < df['close_mean'] - df['close_std'] * i), -i,
-                          df['grid'])
+
 df['close_std'] = df['close_std'] * std_percentage
+df['rate'] = df['close_std'] / df['boll_width']
+# df['close_std'] = np.where(df['rate'] > 0.1, df['boll_width'] * 0.1, df['close_std'])
 
 # 策略1
 df['signal'] = np.where(
-    (df['signal'] == 'wait') & (df['close'].shift(1) < df['boll'].shift(1) + df['close_std'].shift(1)) & (
-            df['close'] > df['boll'] + df['close_std']), 'long', df['signal'])
+    (df['signal'] == 'wait') & (df['change'] > volatility) & (
+                df['close'].shift(1) < df['boll'].shift(1) + df['close_std'].shift(1)) & (
+            df['close'] > df['boll'] + df['close_std']), 'long_', df['signal'])
 df['signal'] = np.where(
-    (df['signal'] == 'wait') & (df['close'].shift(1) > df['boll'].shift(1) + df['close_std'].shift(1)) & (
-            df['close'] < df['boll'] + df['close_std']), 'close_long', df['signal'])
+    (df['signal'] == 'wait') & (df['close'].shift(1) > df['boll'].shift(1) + df['close_std'].shift(1) / 2) & (
+            df['close'] < df['boll'] + df['close_std'] / 2), 'close_long', df['signal'])
 # 策略2
 df['signal'] = np.where(
-    (df['signal'] == 'wait') & (df['close'].shift(1) > df['boll'].shift(1) - df['close_std'].shift(1)) & (
-            df['close'] < df['boll'] - df['close_std']), 'short', df['signal'])
+    (df['signal'] == 'wait') & (df['change'] > volatility) & (
+                df['close'].shift(1) > df['boll'].shift(1) - df['close_std'].shift(1)) & (
+            df['close'] < df['boll'] - df['close_std']), 'short_', df['signal'])
 df['signal'] = np.where(
-    (df['signal'] == 'wait') & (df['close'].shift(1) < df['boll'].shift(1) - df['close_std'].shift(1)) & (
-            df['close'] > df['boll'] - df['close_std']), 'close_short', df['signal'])
+    (df['signal'] == 'wait') & (df['close'].shift(1) < df['boll'].shift(1) - df['close_std'].shift(1) / 2) & (
+            df['close'] > df['boll'] - df['close_std'] / 2), 'close_short', df['signal'])
+
 # 策略3
 df['signal'] = np.where(
-    (df['signal'] == 'wait') & (df['close'] > df['boll_ub'] - df['close_std']) & (df['grid'] > 0) & (
-            df['grid'] < 4),
-    'short', df['signal'])
+    (df['signal'] == 'wait') & (df['change'] > volatility) & (df['close'] > df['boll_ub'] - df['close_std'] / 2) & (
+            df['close'] < df['boll_ub'] + df['close_std'] / 2), 'short', df['signal'])
 # 策略4
 df['signal'] = np.where(
-    (df['signal'] == 'wait') & (df['close'] < df['boll_ub'] + df['close_std']) & (df['grid'] < 0) & (
-            df['grid'] > -4),
-    'long', df['signal'])
+    (df['signal'] == 'wait') & (df['change'] > volatility) & (df['close'] < df['boll_lb'] + df['close_std'] / 2) & (
+            df['close'] > df['boll_lb'] - df['close_std'] / 2), 'long', df['signal'])
+df['stop_price'] = 0
+df['stop_price'] = np.where(df['signal'] == 'short', df['boll_ub'] + df['close_std'], df['stop_price'])
+df['stop_price'] = np.where(df['signal'] == 'long', df['boll_lb'] - df['close_std'], df['stop_price'])
+df['signal'] = np.where(df['signal'] == 'long_', 'long', df['signal'])
+df['signal'] = np.where(df['signal'] == 'short_', 'short', df['signal'])
+# df[['signal', 'boll_ub', 'boll_lb', 'close_std', 'stop_price']].to_csv('../data/signal.csv', index=False)
 
-df = df[100:]
-# 账户BTC数量
-btc_amount = 1
-# 网格权重
-grid_power = [0.15, 0.3, 0.55]
+df = df[w:]
 # 市价手续费
 market_rate = 0.00075
 # 限价手续费
 limit_rate = -0.00025
 # limit_rate = 0.00075
-# 初始化参数
+# 账户BTC数量
+btc_amount = 1
 side = 'wait'
-# 最新交易价格
-avg_price = 0
-# 仓位
-positions = []
-# 最新的网格区间
-last_grid = 0
-cost = 0
+trade_price = 0
+stop_price = 0
 btc_amounts = []
+# df = df[9820:]
 for idx, row in df.iterrows():
     btc_amounts.append(btc_amount)
-    print(idx, row['signal'], row['grid'], row['close'])
-    if row['signal'] in ['long_', 'short_'] and side == 'wait':
-        avg_price = row['close']
-        positions.append(avg_price * btc_amount)
+    close = row['close']
+    print(idx, close, row['signal'], btc_amount)
+    # if stop_price > 0:
+    #     if (side == 'long' and row['low'] < stop_price) or (side == 'short' and row['high'] > stop_price):
+    #         earnings = trade_price / stop_price if side == 'short' else stop_price / trade_price
+    #         btc_amount *= earnings * (1 - market_rate)
+    #         side = 'wait'
+    #         trade_price = 0
+    #         stop_price = 0
+    #         continue
+    if side == 'wait' and row['signal'] in ['short', 'long']:
         side = row['signal']
+        trade_price = row['close']
         btc_amount *= (1 - market_rate)
-    elif (row['signal'] == 'long_' and side == 'short') or (row['signal'] == 'short_' and side == 'long') or (
-            row['signal'] == 'long' and side == 'short_') or (row['signal'] == 'short' and side == 'long_'):
-        # 平仓
-        earnings = (row['close'] - avg_price) * sum(positions) / row['close'] / avg_price \
-            if side == 'long' or side == 'long_' else \
-            (avg_price - row['close']) * sum(positions) / row['close'] / avg_price
-        btc_amount += earnings - (sum(positions) / row['close']) * market_rate
-
-        positions = []
-        side = row['signal']
-        avg_price = row['close']
-        # 开仓，带下划线的全仓，不带下划线的分批建仓
-        if side in ['long_', 'short_']:
-            positions.append(avg_price * btc_amount)
-            btc_amount *= (1 - market_rate)
-        else:
-            for i in range(abs(row['grid'])):
-                positions.append(avg_price * btc_amount * grid_power[i])
-            btc_amount -= (sum(positions) / avg_price) * market_rate
-            cost = sum(positions) * avg_price
-            last_grid = row['grid']
-    elif abs(row['grid']) > abs(last_grid) and abs(row['grid']) < len(grid_power) and row['signal'] in ['long',
-                                                                                                        'short']:
-        if (side == 'long' and row['close'] < avg_price) or (side == 'short' and row['close'] > avg_price):
-            num = 0
-            for i in range(len(positions), abs(row['grid'])):
-                num += int(btc_amount * row['close'] * grid_power[i])
-                positions.append(int(btc_amount * row['close'] * grid_power[i]))
-            last_grid = row['grid']
-            cost += num * row['close']
-            avg_price = cost / sum(positions)
-            btc_amount -= num / row['close'] * limit_rate
-    elif len(positions) > 0 and (abs(row['grid']) > len(grid_power) or row['signal'] == 'trend' or (
-            side in ['long', 'short'] and row['signal'] == 'wait')):
-        earnings = (row['close'] - avg_price) * sum(positions) / row['close'] / avg_price \
-            if side == 'long' else \
-            (avg_price - row['close']) * sum(positions) / row['close'] / avg_price
-        btc_amount = btc_amount + earnings - (sum(positions) / row['close']) * market_rate
+        stop_price = row['stop_price']
+    elif row['signal'] == 'trend' and trade_price > 0:
+        earnings = close / trade_price if side == 'long' else trade_price / close
+        btc_amount *= earnings * (1 - market_rate)
         side = 'wait'
-        # 最新交易价格
-        avg_price = 0
-        # 仓位
-        positions = []
-        # 最新的网格区间
-        last_grid = row['grid']
-        cost = 0
+        trade_price = 0
+        stop_price = 0
+    elif (row['signal'] == 'long' and side == 'short') or (row['signal'] == 'short' and side == 'long'):
+        earnings = close / trade_price if side == 'long' else trade_price / close
+        btc_amount *= earnings * (1 - market_rate)
+        side = row['signal']
+        trade_price = row['close']
+        btc_amount *= (1 - market_rate)
+        stop_price = row['stop_price']
+    elif (row['signal'] == 'close_long' and side == 'long') or (row['signal'] == 'close_short' and side == 'short'):
+        earnings = close / trade_price if side == 'long' else trade_price / close
+        btc_amount *= earnings * (1 - market_rate)
+        side = 'wait'
+        trade_price = 0
+        stop_price = 0
 
 df['assets'] = np.array(btc_amounts)
 ax = df[['close', 'assets']].plot(figsize=(20, 10), grid=True, xticks=df.index, rot=90, subplots=True, style='b')
@@ -185,6 +165,6 @@ ax[0].xaxis.set_major_locator(ticker.MaxNLocator(40))
 ax[0].set_xticklabels(df.index[::interval])
 # 美观x轴刻度
 plt.setp(plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
-ax[0].set_title('网格策略回测')
+ax[0].set_title('BOLL_网格策略回测')
 # plt.savefig('../data/' + filename + '_zero_rates_' + str(w) + '.png')
 plt.show()
