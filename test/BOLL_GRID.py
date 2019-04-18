@@ -26,7 +26,8 @@ from datetime import datetime
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
-filename = 'BitMEX-180101-190227-1H'
+# filename = 'BitMEX-180101-190227-1H'
+filename = 'BTC2018-04-01-now-1H'
 df = data2df.csv2df(filename + '.csv')
 df = df.astype(float)
 stock = StockDataFrame.retype(df)
@@ -39,6 +40,7 @@ trend_A1 = 0.3
 trend_A2 = 0.02
 trend_B = 0.04
 trend_C = 0.05
+# trend_D = 0.07
 stop_trade_times = 5
 ts = 3600
 std_percentage = 0.6
@@ -93,20 +95,51 @@ df['signal'] = np.where(
 
 # 策略3
 df['signal'] = np.where(
-    (df['signal'] == 'wait') & (df['change'] > volatility) & (df['close'] > df['boll_ub'] - df['close_std'] / 2) & (
+    (df['signal'] == 'wait') & (df['change'] > volatility) & (df['close'] > df['boll_ub'] - df['close_std'] / 4) & (
             df['close'] < df['boll_ub'] + df['close_std'] / 2), 'short', df['signal'])
 # 策略4
 df['signal'] = np.where(
-    (df['signal'] == 'wait') & (df['change'] > volatility) & (df['close'] < df['boll_lb'] + df['close_std'] / 2) & (
+    (df['signal'] == 'wait') & (df['change'] > volatility) & (df['close'] < df['boll_lb'] + df['close_std'] / 4) & (
             df['close'] > df['boll_lb'] - df['close_std'] / 2), 'long', df['signal'])
+
 df['stop_price'] = 0
-df['stop_price'] = np.where(df['signal'] == 'short', df['boll_ub'] + df['close_std'], df['stop_price'])
-df['stop_price'] = np.where(df['signal'] == 'long', df['boll_lb'] - df['close_std'], df['stop_price'])
+df['stop_price'] = np.where(df['signal'] == 'short', df['boll_ub'] + df['close_std'] / 2, df['stop_price'])
+df['stop_price'] = np.where(df['signal'] == 'long', df['boll_lb'] - df['close_std'] / 2, df['stop_price'])
 df['signal'] = np.where(df['signal'] == 'long_', 'long', df['signal'])
 df['signal'] = np.where(df['signal'] == 'short_', 'short', df['signal'])
-# df[['signal', 'boll_ub', 'boll_lb', 'close_std', 'stop_price']].to_csv('../data/signal.csv', index=False)
-
 df = df[w:]
+
+signal_df = df.loc[(df['signal'] != 'wait')]
+signal_df['signal'] = np.where((signal_df['signal'] != 'trend') & (signal_df['signal'] == signal_df['signal'].shift(1)), 'wait', signal_df['signal'])
+signal_df = signal_df.loc[(signal_df['signal'] != 'wait')]
+df['signal'] = np.where(df['signal'] != 'trend', 'wait', df['signal'])
+long = []
+short = []
+close_long = []
+close_short = []
+for idx, row in signal_df.iterrows():
+    t = idx.timestamp()
+    if row['signal'] == 'long':
+        long.append(pd.Timestamp(datetime.utcfromtimestamp(t)))
+    elif row['signal'] == 'short':
+        short.append(pd.Timestamp(datetime.utcfromtimestamp(t)))
+    elif row['signal'] == 'close_long':
+        close_long.append(pd.Timestamp(datetime.utcfromtimestamp(t)))
+    elif row['signal'] == 'close_short':
+        close_short.append(pd.Timestamp(datetime.utcfromtimestamp(t)))
+
+if len(long) > 0:
+    df.loc[long, 'signal'] = 'long'
+if len(short) > 0:
+    df.loc[short, 'signal'] = 'short'
+if len(close_short) > 0:
+    df.loc[close_short, 'signal'] = 'close_short'
+if len(close_long) > 0:
+    df.loc[close_long, 'signal'] = 'close_long'
+
+
+
+
 # 市价手续费
 market_rate = 0.00075
 # 限价手续费
@@ -166,5 +199,4 @@ ax[0].set_xticklabels(df.index[::interval])
 # 美观x轴刻度
 plt.setp(plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
 ax[0].set_title('BOLL_网格策略回测')
-# plt.savefig('../data/' + filename + '_zero_rates_' + str(w) + '.png')
 plt.show()
