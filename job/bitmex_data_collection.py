@@ -21,8 +21,7 @@ import pandas as pd
 limit = 100
 symbol = 'BTC/USD'
 periods = 60 * 1000 * 5
-# grid 测试开始时间
-begin = 1554220800000
+begin = 1554998400000
 end = int(time.time()) * 1000
 count = int((end - begin) / limit / periods)
 periods_str = '5m'

@@ -26,8 +26,7 @@ from datetime import datetime
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
-# filename = 'BitMEX-180101-190227-1H'
-filename = 'BTC2018-04-01-now-1H'
+filename = 'poloniex_1H'
 df = data2df.csv2df(filename + '.csv')
 df = df.astype(float)
 stock = StockDataFrame.retype(df)
@@ -79,7 +78,7 @@ df['rate'] = df['close_std'] / df['boll_width']
 # 策略1
 df['signal'] = np.where(
     (df['signal'] == 'wait') & (df['change'] > volatility) & (
-                df['close'].shift(1) < df['boll'].shift(1) + df['close_std'].shift(1)) & (
+            df['close'].shift(1) < df['boll'].shift(1) + df['close_std'].shift(1)) & (
             df['close'] > df['boll'] + df['close_std']), 'long_', df['signal'])
 df['signal'] = np.where(
     (df['signal'] == 'wait') & (df['close'].shift(1) > df['boll'].shift(1) + df['close_std'].shift(1) / 2) & (
@@ -87,7 +86,7 @@ df['signal'] = np.where(
 # 策略2
 df['signal'] = np.where(
     (df['signal'] == 'wait') & (df['change'] > volatility) & (
-                df['close'].shift(1) > df['boll'].shift(1) - df['close_std'].shift(1)) & (
+            df['close'].shift(1) > df['boll'].shift(1) - df['close_std'].shift(1)) & (
             df['close'] < df['boll'] - df['close_std']), 'short_', df['signal'])
 df['signal'] = np.where(
     (df['signal'] == 'wait') & (df['close'].shift(1) < df['boll'].shift(1) - df['close_std'].shift(1) / 2) & (
@@ -110,7 +109,8 @@ df['signal'] = np.where(df['signal'] == 'short_', 'short', df['signal'])
 df = df[w:]
 
 signal_df = df.loc[(df['signal'] != 'wait')]
-signal_df['signal'] = np.where((signal_df['signal'] != 'trend') & (signal_df['signal'] == signal_df['signal'].shift(1)), 'wait', signal_df['signal'])
+signal_df['signal'] = np.where((signal_df['signal'] != 'trend') & (signal_df['signal'] == signal_df['signal'].shift(1)),
+                               'wait', signal_df['signal'])
 signal_df = signal_df.loc[(signal_df['signal'] != 'wait')]
 df['signal'] = np.where(df['signal'] != 'trend', 'wait', df['signal'])
 long = []
@@ -136,9 +136,6 @@ if len(close_short) > 0:
     df.loc[close_short, 'signal'] = 'close_short'
 if len(close_long) > 0:
     df.loc[close_long, 'signal'] = 'close_long'
-
-
-
 
 # 市价手续费
 market_rate = 0.00075

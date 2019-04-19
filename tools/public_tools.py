@@ -78,13 +78,13 @@ def kline_fitting(kline, n, fitting_time):
     l = []
     for i in range(0, len(kline), n):
         timestamp = int(kline[i][0] / 1000) if len(str(kline[0][0])) == 13 else kline[i][0]
-        open = kline[i][1]
-        high = kline[i][2]
+        open = kline[i][3]
+        high = kline[i][1]
         for j in range(i + 1, i + n):
-            high = max(high, kline[j][2])
-        low = kline[i][3]
+            high = max(high, kline[j][1])
+        low = kline[i][2]
         for j in range(i + 1, i + n):
-            low = min(low, kline[j][3])
+            low = min(low, kline[j][2])
         close = kline[i + n - 1][4]
         volumn = 0
         for j in range(i, i + n):

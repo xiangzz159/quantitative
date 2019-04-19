@@ -22,7 +22,7 @@ import time
 
 symbol = 'tBTCUSD'
 # Available values: '1m', '5m', '15m', '30m', '1h', '3h', '6h', '12h', '1D', '7D', '14D', '1M'
-timeframe = '1h'
+timeframe = '5m'
 # max:5000
 limit = 5000
 # ms
@@ -44,7 +44,7 @@ try:
 
     df['Timestamp'] = df['Timestamp'] / 1000
     date = time.strftime("%Y-%m-%d", time.localtime(start / 1000))
-    fileName = '../data/Bitfinex%s-%s.csv' % (date, "now-1H")
+    fileName = '../data/bitfinex_5M.csv'
     df.to_csv(fileName, index=False)
 except BaseException as e:
     print(e)
