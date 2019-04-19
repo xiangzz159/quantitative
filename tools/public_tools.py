@@ -120,3 +120,19 @@ def fn_timer(function):
         return result
 
     return function_timer
+
+
+if __name__ == '__main__':
+    import csv
+    import pandas as pd
+
+    lines = list(csv.reader(open(r'../data/BTC2018-01-01-now-30M.csv')))
+    header, values = lines[0], lines[1:]
+    data_dict = {h: v for h, v in zip(header, zip(*values))}
+    df = pd.DataFrame(data_dict)
+    df = df.astype(float)
+    l = df.values.tolist()
+    l_ = kline_fitting(l, 2, 3600)
+
+    df = pd.DataFrame(l_, columns=['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume'])
+    df.to_csv('../data/BTC2018-01-01-now-1H.csv', index=False)

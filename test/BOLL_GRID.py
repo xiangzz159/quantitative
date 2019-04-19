@@ -26,7 +26,7 @@ from datetime import datetime
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
-filename = 'poloniex_1H'
+filename = 'BTC2018-01-01-now-1H'
 df = data2df.csv2df(filename + '.csv')
 df = df.astype(float)
 stock = StockDataFrame.retype(df)
@@ -195,5 +195,5 @@ ax[0].xaxis.set_major_locator(ticker.MaxNLocator(40))
 ax[0].set_xticklabels(df.index[::interval])
 # 美观x轴刻度
 plt.setp(plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
-ax[0].set_title('BOLL_网格策略回测')
+ax[0].set_title(filename + ' BOLL策略回测')
 plt.show()
