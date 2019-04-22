@@ -460,3 +460,49 @@ async def cal_someone_fitness(df,
         total_yield += market_yield
 
     return index, 0.5 * (max_drawdown - total_yield)
+
+def public_func(df, signal, signal_key):
+    df['signal_boll'] = 0
+    df['signal_boll_lb'] = 0
+    df['signal_boll_ub'] = 0
+    not_wait = len(df.loc[df[signal_key] != 'wait'])
+    df['signal_boll'] = np.where(df[signal_key] == signal, df['boll'], 0)
+    df['signal_boll_lb'] = np.where(df[signal_key] == signal, df['boll_lb'], 0)
+    df['signal_boll_ub'] = np.where(df[signal_key] == signal, df['boll_ub'], 0)
+
+    if not_wait == 0:
+        return df
+
+    df_ = df.loc[df[signal_key] == signal]
+    for i in range(1, len(df_)):
+        row = df_.iloc[i]
+        row_ = df_.iloc[i - 1]
+        df['signal_boll'] = np.where(
+            (df['signal_boll'] == 0) & (df['timestamp'] > row_['timestamp']) & (df['timestamp'] < row['timestamp']),
+            row_['boll'], df['signal_boll'])
+        df['signal_boll_lb'] = np.where(
+            (df['signal_boll_lb'] == 0) & (df['timestamp'] > row_['timestamp']) & (
+                    df['timestamp'] < row['timestamp']),
+            row_['boll_lb'], df['signal_boll_lb'])
+        df['signal_boll_ub'] = np.where(
+            (df['signal_boll_ub'] == 0) & (df['timestamp'] > row_['timestamp']) & (
+                    df['timestamp'] < row['timestamp']),
+            row_['boll_ub'], df['signal_boll_ub'])
+
+    row1 = df.iloc[0]
+    row2 = df_.iloc[len(df_) - 1]
+    df['signal_boll'] = np.where((df['signal_boll'] == 0) & (df['timestamp'] >= row1['timestamp']), row1['boll'],
+                                 df['signal_boll'])
+    df['signal_boll_lb'] = np.where((df['signal_boll_lb'] == 0) & (df['timestamp'] >= row1['timestamp']),
+                                    row1['boll_lb'], df['signal_boll_lb'])
+    df['signal_boll_ub'] = np.where((df['signal_boll_ub'] == 0) & (df['timestamp'] >= row1['timestamp']),
+                                    row1['boll_ub'], df['signal_boll_ub'])
+
+    df['signal_boll'] = np.where((df['timestamp'] > row2['timestamp']), row2['boll'],
+                                 df['signal_boll'])
+    df['signal_boll_lb'] = np.where((df['timestamp'] > row2['timestamp']),
+                                    row2['boll_lb'], df['signal_boll_lb'])
+    df['signal_boll_ub'] = np.where((df['timestamp'] > row2['timestamp']),
+                                    row2['boll_ub'], df['signal_boll_ub'])
+
+    return df
