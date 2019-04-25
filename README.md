@@ -1,19 +1,8 @@
 # quantitative 量化交易
 
-开发语言：python3.6
+开发语言：python3.7
 
 推荐使用Anaconda集合包：https://www.anaconda.com/
-
-或者通过下面方式安装项目包：
-
-pip install --upgrade pip
-
-pip install -r requirements.txt
-
-
-
-项目以poloniex数据为准
-时间周期：30m, 1h, 2h, 4h
 
 **项目结构** 
 ```

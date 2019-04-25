@@ -113,7 +113,6 @@ for i in range(stop_trade_times):
     df['signal'] = np.where((df['signal'] == 'wait') & (df['signal'].shift(1 + i) == 'trend'), 'can_not_trade',
                             df['signal'])
 df['signal'] = np.where(df['signal'] == 'can_not_trade', 'trend', df['signal'])
-df['close'] = df['open']
 df['close_mean'] = df['close'].rolling(
     center=False, window=w).mean()
 df['close_std'] = df['close'].rolling(
@@ -128,7 +127,7 @@ df['signal'] = np.where(
     (df['signal'] == 'wait') & (df['change'] > volatility) & (df['close'] > df['boll_ub'] - df['close_std'] / 4) & (
             df['close'] < df['boll_ub'] + df['close_std'] / 2), 'short', df['signal'])
 df = public_func(df, 'short', 'signal')
-df['signal'] = np.where((df['signal'] != 'wait') & (df['high'] >= df['signal_boll_ub'] + df['close_std'] / 4),
+df['signal'] = np.where((df['signal'] == 'wait') & (df['high'] >= df['signal_boll_ub'] + df['close_std'] / 4),
                         'close_short', df['signal'])
 
 # 策略2
@@ -136,7 +135,7 @@ df['signal'] = np.where(
     (df['signal'] == 'wait') & (df['change'] > volatility) & (df['close'] < df['boll_lb'] + df['close_std'] / 4) & (
             df['close'] > df['boll_lb'] - df['close_std'] / 2), 'long', df['signal'])
 df = public_func(df, 'long', 'signal')
-df['signal'] = np.where((df['signal'] != 'wait') & (df['low'] <= df['signal_boll_lb'] - df['close_std'] / 4),
+df['signal'] = np.where((df['signal'] == 'wait') & (df['low'] <= df['signal_boll_lb'] - df['close_std'] / 4),
                         'close_long', df['signal'])
 
 # 策略3
@@ -156,43 +155,11 @@ df['signal'] = np.where(
     (df['signal'] == 'wait') & (df['close'].shift(1) < df['boll'].shift(1) - df['close_std'].shift(1) / 2) & (
             df['close'] > df['boll'] - df['close_std'] / 2), 'close_short', df['signal'])
 
-df['stop_price'] = 0
-df['stop_price'] = np.where(df['signal'] == 'short', df['boll_ub'] + df['close_std'] / 2, df['stop_price'])
-df['stop_price'] = np.where(df['signal'] == 'long', df['boll_lb'] - df['close_std'] / 2, df['stop_price'])
 df['signal'] = np.where(df['signal'] == 'long_', 'long', df['signal'])
 df['signal'] = np.where(df['signal'] == 'short_', 'short', df['signal'])
 df = df[w:]
 
-signal_df = df.loc[(df['signal'] != 'wait')]
-signal_df['signal'] = np.where((signal_df['signal'] != 'trend') & (signal_df['signal'] == signal_df['signal'].shift(1)),
-                               'wait', signal_df['signal'])
-signal_df = signal_df.loc[(signal_df['signal'] != 'wait')]
-df['signal'] = np.where(df['signal'] != 'trend', 'wait', df['signal'])
-long = []
-short = []
-close_long = []
-close_short = []
-for idx, row in signal_df.iterrows():
-    t = idx.timestamp()
-    if row['signal'] == 'long':
-        long.append(pd.Timestamp(datetime.utcfromtimestamp(t)))
-    elif row['signal'] == 'short':
-        short.append(pd.Timestamp(datetime.utcfromtimestamp(t)))
-    elif row['signal'] == 'close_long':
-        close_long.append(pd.Timestamp(datetime.utcfromtimestamp(t)))
-    elif row['signal'] == 'close_short':
-        close_short.append(pd.Timestamp(datetime.utcfromtimestamp(t)))
 
-if len(long) > 0:
-    df.loc[long, 'signal'] = 'long'
-if len(short) > 0:
-    df.loc[short, 'signal'] = 'short'
-if len(close_short) > 0:
-    df.loc[close_short, 'signal'] = 'close_short'
-if len(close_long) > 0:
-    df.loc[close_long, 'signal'] = 'close_long'
-
-# df[['signal', 'close', 'signal_boll_ub', 'signal_boll_lb']].to_csv('../data/signal.csv')
 
 # 市价手续费
 market_rate = 0.00075
@@ -203,7 +170,6 @@ limit_rate = -0.00025
 btc_amount = 1
 side = 'wait'
 trade_price = 0
-stop_price = 0
 btc_amounts = []
 # df = df[9820:]
 for idx, row in df.iterrows():
@@ -214,26 +180,22 @@ for idx, row in df.iterrows():
         side = row['signal']
         trade_price = row['close']
         btc_amount *= (1 - market_rate)
-        stop_price = row['stop_price']
     elif row['signal'] == 'trend' and trade_price > 0:
         earnings = close / trade_price if side == 'long' else trade_price / close
         btc_amount *= earnings * (1 - market_rate)
         side = 'wait'
         trade_price = 0
-        stop_price = 0
     elif (row['signal'] == 'long' and side == 'short') or (row['signal'] == 'short' and side == 'long'):
         earnings = close / trade_price if side == 'long' else trade_price / close
         btc_amount *= earnings * (1 - market_rate)
         side = row['signal']
         trade_price = row['close']
         btc_amount *= (1 - market_rate)
-        stop_price = row['stop_price']
     elif (row['signal'] == 'close_long' and side == 'long') or (row['signal'] == 'close_short' and side == 'short'):
         earnings = close / trade_price if side == 'long' else trade_price / close
         btc_amount *= earnings * (1 - market_rate)
         side = 'wait'
         trade_price = 0
-        stop_price = 0
 
 df['assets'] = np.array(btc_amounts)
 ax = df[['close', 'assets']].plot(figsize=(20, 10), grid=True, xticks=df.index, rot=90, subplots=True, style='b')
