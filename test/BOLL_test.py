@@ -74,7 +74,7 @@ def public_func(df, signal, signal_key):
     return df
 
 
-filename = 'bitfinex_1H'
+filename = 'BitMEX-180101-190227-1H'
 df = data2df.csv2df(filename + '.csv')
 df = df.astype(float)
 stock = StockDataFrame.retype(df)
