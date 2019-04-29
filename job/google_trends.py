@@ -1,4 +1,4 @@
-#！/usr/bin/env python
+# ！/usr/bin/env python
 # _*_ coding:utf-8 _*_
 
 '''
@@ -16,14 +16,13 @@
 from pytrends.request import TrendReq
 import time
 
-
 pytrend = TrendReq()
 
-pytrend.build_payload(kw_list=['BTC USD', 'Buy Bitcoin'], timeframe='now 7-d')
+pytrend.build_payload(kw_list=['BTC USD', 'Buy Bitcoin'], timeframe='today 6-m')
 
 # Interest Over Time
 interest_over_time_df = pytrend.interest_over_time()
-print('\n', interest_over_time_df.head())
+print('\n', interest_over_time_df)
 # time.sleep(5)
 
 
