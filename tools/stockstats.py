@@ -575,6 +575,9 @@ class StockDataFrame(pd.DataFrame):
         df['kdjk'] = df['kdjk_9']
         df['kdjd'] = df['kdjd_9']
         df['kdjj'] = df['kdjj_9']
+        del df['kdjk_9']
+        del df['kdjd_9']
+        del df['kdjj_9']
 
     @classmethod
     def _get_cr(cls, df, window=26):
@@ -907,7 +910,7 @@ class StockDataFrame(pd.DataFrame):
             cls._get_boll(df)
         elif key in ['macd', 'macds', 'macdh']:
             cls._get_macd(df)
-        elif key in ['kdjk', 'kdjd', 'kdjj']:
+        elif key in ['kdjk', 'kdjd', 'kdjj', 'kdj']:
             cls._get_kdj_default(df)
         elif key in ['cr', 'cr-ma1', 'cr-ma2', 'cr-ma3']:
             cls._get_cr(df)
