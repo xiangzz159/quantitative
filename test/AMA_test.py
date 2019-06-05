@@ -180,7 +180,7 @@ for i in range(200, len(df)):
         asset *= (1 - market_rate)
         open_price = row['close']
         side = row['signal']
-    elif (row['signal'] == 'close_long' and side == 'long') and (row['signal'] == 'close_short' and side == 'short'):
+    elif (row['signal'] == 'close_long' and side == 'long') or (row['signal'] == 'close_short' and side == 'short'):
     # elif row['signal'] == 'wait' and side in ['long', 'short']:
         asset = asset * (row['close'] / open_price) if side == 'long' else asset * (open_price / row['close'])
         asset *= (1 - market_rate)
