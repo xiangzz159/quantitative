@@ -20,11 +20,11 @@ import pandas as pd
 
 limit = 100
 symbol = 'BTC/USD'
-periods = 60 * 1000 * 5
-begin = 1554998400000
+periods = 60 * 1000 * 60
+begin = 1504224000000
 end = int(time.time()) * 1000
 count = int((end - begin) / limit / periods)
-periods_str = '5m'
+periods_str = '1h'
 ex = ccxt.bitmex()
 klines = []
 for i in range(count):
@@ -44,5 +44,6 @@ data = np.array(klines[0])
 for i in range(1, len(klines)):
     data = np.append(data, klines[i], axis=0)
 df = pd.DataFrame(data, columns=['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume'])
+df['Timestamp'] = df['Timestamp'] - periods
 df['Timestamp'] = df['Timestamp'] / 1000
-df.to_csv('/root/bitmex_data.csv', index=False)
+df.to_csv('/root/BitMEX-170901-190606-1H.csv', index=False)

@@ -78,13 +78,13 @@ def kline_fitting(kline, n, fitting_time):
     l = []
     for i in range(0, len(kline), n):
         timestamp = int(kline[i][0] / 1000) if len(str(kline[0][0])) == 13 else kline[i][0]
-        open = kline[i][3]
-        high = kline[i][1]
+        open = kline[i][1]
+        high = kline[i][2]
         for j in range(i + 1, i + n):
-            high = max(high, kline[j][1])
-        low = kline[i][2]
+            high = max(high, kline[j][2])
+        low = kline[i][3]
         for j in range(i + 1, i + n):
-            low = min(low, kline[j][2])
+            low = min(low, kline[j][3])
         close = kline[i + n - 1][4]
         volumn = 0
         for j in range(i, i + n):
@@ -126,13 +126,15 @@ if __name__ == '__main__':
     import csv
     import pandas as pd
 
-    lines = list(csv.reader(open(r'../data/BTC2018-01-01-now-30M.csv')))
+    lines = list(csv.reader(open(r'../data/BitMEX-170901-190606-1H.csv')))
     header, values = lines[0], lines[1:]
     data_dict = {h: v for h, v in zip(header, zip(*values))}
     df = pd.DataFrame(data_dict)
     df = df.astype(float)
+    # size = len(df)
+    # df = df[size - 100:]
     l = df.values.tolist()
-    l_ = kline_fitting(l, 2, 3600)
+    l_ = kline_fitting(l, 4, 60 * 60 * 4)
 
     df = pd.DataFrame(l_, columns=['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume'])
-    df.to_csv('../data/BTC2018-01-01-now-1H.csv', index=False)
+    df.to_csv('../data/BitMEX-170901-190606-4H.csv', index=False)
