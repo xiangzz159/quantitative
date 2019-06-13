@@ -25,7 +25,7 @@ from datetime import datetime
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
-filename = 'BTC2017-09-01-now-4H'
+filename = 'BitMEX-170901-190606-4H'
 df = data2df.csv2df(filename + '.csv')
 df = df.astype(float)
 stock = StockDataFrame.retype(df)

@@ -21,72 +21,71 @@ import matplotlib.ticker as ticker
 from tools import data2df
 import matplotlib.pyplot as plt
 
-# 本金
-principal = 10000.0
-filename = 'BTC2018-01-01-now-4H'
+
+filename = 'BitMEX-170901-190606-4H'
 df = data2df.csv2df(filename + '.csv')
 df = df.astype(float)
-df['Timestamp'] = df['Timestamp'].astype(int)
 stock = StockDataFrame.retype(df)
+df['date'] = pd.to_datetime(df['timestamp'], unit='s')
 
-df['date'] = df['timestamp'].apply(lambda x: time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(x)))
-df['date'] = pd.to_datetime(df['date'])
-
+df.index = df.date
+stock = StockDataFrame.retype(df)
 stock['cci']
 stock['stoch_rsi']
 # 去掉前几个cci指标不准数据
-df = df[5:]
+df = df[10:]
 
-df['regime'] = np.where((df['cci'] >= 95) & (df['cci'].shift(1) < 95), 'long', 'wait')
-df['regime'] = np.where(
+df['signal'] = np.where((df['cci'] >= 95) & (df['cci'].shift(1) < 95), 'long', 'wait')
+df['signal'] = np.where(
     ((df['cci'] <= 95) & (df['cci'].shift(1) > 95)),
-    'close_long', df['regime'])
-df['regime'] = np.where((df['cci'] <= -95) & (df['cci'].shift(1) >= -95), 'short', df['regime'])
-df['regime'] = np.where((df['cci'] >= -95) & (df['cci'].shift(1) <= -95),
-                        'close_short', df['regime'])
+    'close_long', df['signal'])
+df['signal'] = np.where((df['cci'] <= -95) & (df['cci'].shift(1) >= -95), 'short', df['signal'])
+df['signal'] = np.where((df['cci'] >= -95) & (df['cci'].shift(1) <= -95),
+                        'close_short', df['signal'])
 
+# 市价手续费
+market_rate = 0.00075
+# 限价手续费
+limit_rate = -0.00025
+# limit_rate = 0.00075
+# 账户BTC数量
+btc_amount = 1
+side = 'wait'
+trade_price = 0
+btc_amounts = []
+for idx, row in df.iterrows():
+    btc_amounts.append(btc_amount)
+    close = row['close']
+    print(idx, close, row['signal'], btc_amount)
+    if side == 'wait' and row['signal'] in ['short', 'long']:
+        side = row['signal']
+        trade_price = row['close']
+        btc_amount *= (1 - market_rate)
+    elif row['signal'] == 'trend' and trade_price > 0:
+        earnings = close / trade_price if side == 'long' else trade_price / close
+        btc_amount *= earnings * (1 - market_rate)
+        side = 'wait'
+        trade_price = 0
+    elif (row['signal'] == 'long' and side == 'short') or (row['signal'] == 'short' and side == 'long'):
+        earnings = close / trade_price if side == 'long' else trade_price / close
+        btc_amount *= earnings * (1 - market_rate)
+        side = row['signal']
+        trade_price = row['close']
+        btc_amount *= (1 - market_rate)
+    elif (row['signal'] == 'close_long' and side == 'long') or (row['signal'] == 'close_short' and side == 'short'):
+        earnings = close / trade_price if side == 'long' else trade_price / close
+        btc_amount *= earnings * (1 - market_rate)
+        side = 'wait'
+        trade_price = 0
 
-df_regime = df.loc[df['regime'] != 'wait']
-# 逆序
-df_regime = df_regime[::-1]
-unless_regime = df_regime.loc[
-    ((df_regime['regime'] == 'close_short') & (df_regime['regime'].shift(1) == 'close_short')) | (
-            (df_regime['regime'] == 'close_long') & (df_regime['regime'].shift(1) == 'close_long')) | (
-                (df_regime['regime'] == 'close_short') & (df_regime['regime'].shift(1) == 'close_long')) | (
-                (df_regime['regime'] == 'close_long') & (df_regime['regime'].shift(1) == 'close_short'))]
-
-for index, row in unless_regime.iterrows():
-    df_regime = df_regime.drop([index])
-df_regime = df_regime[::-1]
-if (df_regime[:1]['regime'] == 'close_long').bool() or (df_regime[:1]['regime'] == 'close_short').bool():
-    df_regime = df_regime[1:]
-if (df_regime[-1:]['regime'] == 'long').bool() or (df_regime[-1:]['regime'] == 'short').bool():
-    df_regime = df_regime[:len(df_regime) - 1]
-
-# print(df_regime[['date', 'close', 'regime']].tail(50))
-# 计算本息
-l = []
-for i in range(1, len(df_regime), 2):
-    row_ = df_regime.iloc[i - 1]
-    row = df_regime.iloc[i]
-    if row['regime'] == 'close_long' and row_['regime'] == 'long':
-        principal = principal * row['close'] / row_['close']
-        l.append([row['date'], row['close'], principal, 'long', 1])
-    elif row['regime'] == 'close_short' and row_['regime'] == 'short':
-        principal = principal * row_['close'] / row['close']
-        l.append([row['date'], row['close'], principal, 'short', -1])
-profits = pd.DataFrame(l, columns=['date', 'close', 'principal', 'type', 's'])
-# print(profits)
-
-ax = profits[['close', 'principal']].plot(figsize=(20, 10), grid=True, xticks=profits.index, rot=90, subplots=True,
-                                          style='b')
-
+df['assets'] = np.array(btc_amounts)
+ax = df[['close', 'assets']].plot(figsize=(20, 10), grid=True, xticks=df.index, rot=90, subplots=True, style='b')
+interval = int(len(df) / (40 - 1))
 # 设置x轴刻度数量
 ax[0].xaxis.set_major_locator(ticker.MaxNLocator(40))
 # 以date为x轴刻度
-ax[0].set_xticklabels(profits.date)
+ax[0].set_xticklabels(df.index[::interval])
 # 美观x轴刻度
 plt.setp(plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
-plt.title(filename)
-# plt.savefig('../data/' + filename + '.png')
+ax[0].set_title(filename + ' CCI策略回测')
 plt.show()
