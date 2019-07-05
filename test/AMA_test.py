@@ -13,16 +13,14 @@
 
 '''
 
-import time
-from tools import public_tools, data2df
-from tools.stockstats import StockDataFrame
+from tools import data2df
 import numpy as np
+from tools.BmBackTest import BmBackTest
 import pandas as pd
-import matplotlib.ticker as ticker
-import matplotlib.pyplot as plt
 
 
-def analysis(df):
+def analysis(datas):
+    df = pd.DataFrame(datas, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
     n = 15
     percentage = 0.1
     # 1. 价格方向
@@ -59,7 +57,8 @@ def analysis(df):
     return df.iloc[-1]
 
 
-def analysis_(df):
+def analysis_(datas):
+    df = pd.DataFrame(datas, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
     n = 15
     percentage = 0.1
     atr_length = 5
@@ -148,53 +147,36 @@ def analysis_(df):
     return df.iloc[-1]
 
 
-plt.rcParams['font.sans-serif'] = ['SimHei']
-plt.rcParams['axes.unicode_minus'] = False
-
-filename = 'BTC2017-09-01-now-4H'
+filename = 'BitMEX-170901-190606-4H'
 df = data2df.csv2df(filename + '.csv')
 df = df.astype(float)
-stock = StockDataFrame.retype(df)
+df = df.astype(float)
 
-df['date'] = pd.to_datetime(df['timestamp'], unit='s')
-df.index = df.date
-df[['close']] = round(df[['close']], 1)
+datas = df.values
 
-asset_changes = []
-asset = 1
-side = 'wait'
-open_price = 0
-market_rate = 7.5 / 10000
-for i in range(200, len(df)):
-    asset_changes.append(asset)
-    test_df = df[i - 200: i]
-    row = analysis_(test_df)
-    print(i, row['close'], row['signal'], asset, side, open_price)
+backtest = BmBackTest({
+    'asset': 1
+})
 
-    if row['signal'] in ['long', 'short'] and side == 'wait':
-        side = row['signal']
-        open_price = row['close']
-        asset *= (1 - market_rate)
-    elif row['signal'] in ['long', 'short'] and side != row['signal']:
-        asset = asset * (row['close'] / open_price) if side == 'long' else asset * (open_price / row['close'])
-        asset *= (1 - market_rate)
-        open_price = row['close']
-        side = row['signal']
-    elif (row['signal'] == 'close_long' and side == 'long') or (row['signal'] == 'close_short' and side == 'short'):
-    # elif row['signal'] == 'wait' and side in ['long', 'short']:
-        asset = asset * (row['close'] / open_price) if side == 'long' else asset * (open_price / row['close'])
-        asset *= (1 - market_rate)
-        open_price = 0
-        side = 'wait'
+level = 1
 
-num = len(asset_changes)
-df = df[-1 * num:]
-df['asset'] = np.array(asset_changes)
+for i in range(370, len(df)):
+    test_data = datas[i - 370: i]
+    row = analysis(test_data)
 
-ax = df[['close', 'asset']].plot(figsize=(20, 10), grid=True, xticks=df.index, rot=90, subplots=True, style='b')
-interval = int(len(df) / (40 - 1))
-ax[0].xaxis.set_major_locator(ticker.MaxNLocator(40))
-ax[0].set_xticklabels(df.index[::interval])
-plt.setp(plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
-ax[0].set_title('AMA')
-plt.show()
+    if row['signal'] in ['long', 'short']:
+        amount = int(backtest.asset * row['close'] * level)
+        backtest.create_order(row['signal'], "market", row['close'], amount)
+        # backtest.stop_price = row['%s_stop_price' % row['signal']]
+
+    elif (row['signal'] == 'close_long' and backtest.side == 'long') or (
+            row['signal'] == 'close_short' and backtest.side == 'short'):
+        backtest.close_positions(row['close'], 'market')
+
+    else:
+        backtest.add_data(row['close'], row['high'], row['low'])
+
+    print(i, row['close'], row['signal'], backtest.asset, backtest.float_profit, backtest.asset + backtest.float_profit)
+
+# backtest.show("AMA")
+backtest.real_time_show("AMA")
