@@ -19,7 +19,7 @@ import time
 import numpy as np
 from tools.stockstats import StockDataFrame
 
-df = data2df.csv2df('BTC2017-09-01-now-4H.csv')
+df = data2df.csv2df('BitMEX-170901-190606-4H.csv')
 df = df.astype(float)
 df['Timestamp'] = df['Timestamp'].astype(int)
 stock = StockDataFrame.retype(df)

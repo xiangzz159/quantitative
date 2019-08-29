@@ -36,12 +36,12 @@ def wave_guess(arr):
     print(len(wave_base_mean))
     print("######### result #########")
     # 波峰，波谷的平均值的差，是波动周期
-    wave_period = abs(int(wave_crest_mean[0] - wave_base_mean[0]))
+    wave_period = abs(int(wave_crest_mean[1] - wave_base_mean[1]))
     print("wave_period_day:", wave_period)
     # 波峰
-    print("wave_crest_mean:", round(wave_crest_mean[0], 2))
+    print("wave_crest_mean:", round(wave_crest_mean[1], 2))
     # 波谷
-    print("wave_base_mean:", round(wave_base_mean[0], 2))
+    print("wave_base_mean:", round(wave_base_mean[1], 2))
 
     ############### 以下为画图显示用 ###############
     wave_crest_x = []  # 波峰x

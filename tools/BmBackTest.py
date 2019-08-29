@@ -56,6 +56,18 @@ class BmBackTest(object):
                 fee = qty * self.limit_rate
             self.asset = self.asset - fee
 
+        elif self.side in ['long', 'short'] and self.side == side:  # 加仓
+            self.open_price = (self.open_amount * self.open_price + price * amount) / (amount + self.open_amount)
+            self.open_amount += amount
+            qty = amount / price
+            self.open_qty += qty
+            fee = 0
+            if order_type == "market":
+                fee = qty * self.market_rate
+            else:
+                fee = qty * self.limit_rate
+            self.asset = self.asset - fee
+
         self.add_plt_data(self.asset + self.float_profit, price)
 
     def close_positions(self, price, order_type):
@@ -80,11 +92,10 @@ class BmBackTest(object):
         self.add_plt_data(self.asset + self.float_profit, price)
 
     def add_data(self, price, high=None, low=None):
-        if self.side != 'wait':
-            if self.stop_price > 0:
-                if (self.side == 'long' and low and self.stop_price > low) or (self.side == 'short' and high and self.stop_price < high):
-                    self.close_positions(self.stop_price, 'market')
-                    return
+        if self.side != 'wait' and self.stop_price > 0:
+            if (self.side == 'long' and low and self.stop_price > low) or (self.side == 'short' and high and self.stop_price < high):
+                self.close_positions(self.stop_price, 'market')
+                return
 
         close_qty = self.open_amount / price
         profit = self.open_qty - close_qty if self.side == 'long' else close_qty - self.open_qty
