@@ -25,7 +25,8 @@ import time
 import numpy as np
 from tools import data2df
 
-df = data2df.csv2df('BTC2017.9.1-now-4H.csv')
+df = data2df.csv2df('BitMEX-ETH-180803-190817-4H.csv')
+df = df.astype(float)
 df['Date'] = df['Timestamp'].apply(lambda x: time.strftime("%Y--%m--%d", time.localtime(int(x))))
 df['Date'] = pd.to_datetime(df['Date'])
 df[['Close', 'High', 'Open', 'Low']] = df[['Close', 'High', 'Open', 'Low']].astype(float)

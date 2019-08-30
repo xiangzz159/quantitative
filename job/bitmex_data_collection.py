@@ -19,9 +19,9 @@ import numpy as np
 import pandas as pd
 
 limit = 100
-symbol = 'BTC/USD'
+symbol = 'ETH/USD'
 periods = 60 * 1000 * 60
-begin = 1504224000000
+begin = 1533254400000
 end = int(time.time()) * 1000
 count = int((end - begin) / limit / periods)
 periods_str = '1h'
@@ -46,4 +46,4 @@ for i in range(1, len(klines)):
 df = pd.DataFrame(data, columns=['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume'])
 df['Timestamp'] = df['Timestamp'] - periods
 df['Timestamp'] = df['Timestamp'] / 1000
-df.to_csv('/root/BitMEX-170901-190606-1H.csv', index=False)
+df.to_csv('/home/BitMEX-ETH-180803-190817-1H.csv', index=False)
