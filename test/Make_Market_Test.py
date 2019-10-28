@@ -27,14 +27,20 @@ class SpotMarket(object):
 
     def price_trend_factor(self, trades, buy1_price, sell1_price, buy2_price, sell2_price, buy3_price, sell3_price,
                            vol_list, index_type=None, symmetric=True):
+        # 历史交易价格
         prices = trades["price"].values.tolist()
+        # 最近6个成交价格
         latest_trades = prices[-6:]
+        # 计算中间价格
         mid_price = (buy1_price + sell1_price) / 2 * 0.7 + (buy2_price + sell2_price) / 2 * 0.2 + (
                 buy3_price + sell3_price) / 2 * 0.1
         latest_trades.append(mid_price)
+        # 牛趋势
         is_bull_trend = False
+        # 熊趋势
         is_bear_trend = False
         last_price_too_far_from_latest = False
+        # 大单交易
         has_large_vol_trade = False
 
         if latest_trades[-1] > max(latest_trades[:-1]) + latest_trades[-1] * 0.00005 or (
@@ -58,6 +64,7 @@ class SpotMarket(object):
 
         if index_type == "rsi":
             prices = trades["price"]
+            # 计算rsi指标
             index = indicators.rsi_value(prices, len(prices) - 1)
         else:
             index = self.buy_trades_ratio(trades)

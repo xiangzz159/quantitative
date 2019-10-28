@@ -150,7 +150,6 @@ def analysis_(datas):
 filename = 'BitMEX-170901-190606-4H'
 df = data2df.csv2df(filename + '.csv')
 df = df.astype(float)
-df = df.astype(float)
 
 datas = df.values
 

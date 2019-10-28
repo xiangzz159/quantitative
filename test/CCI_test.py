@@ -20,7 +20,7 @@ import pandas as pd
 from tools.BmBackTest import BmBackTest
 
 
-def analysis_(datas):
+def analysis(datas):
     df = pd.DataFrame(datas, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
     df = df.astype(float)
     stock = StockDataFrame.retype(df)

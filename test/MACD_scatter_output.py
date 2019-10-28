@@ -20,7 +20,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-hist_ema, hist_signal_ma, hist_signal_ma_, ii, jj = 1,4,4,3.0,-5.0
+hist_ema, hist_signal_ma, hist_signal_ma_, ii, jj = 1, 4, 4, 3.0, -5.0
 # hist_ema, hist_signal_ma, hist_signal_ma_, ii, jj = 1,3,7,4.0,-2.5
 df = data2df.csv2df('BTC2017-09-01-now-4H.csv')
 df = df.astype(float)
