@@ -100,7 +100,6 @@ def signal_generation(df1, df2, method):
     signals['positions1'] = signals['signals1'].diff()
     signals['signals2'] = -signals['signals1']
     signals['positions2'] = signals['signals2'].diff()
-    print(signals[['z', 'signals1', 'positions1', 'signals2', 'positions2']].tail(10))
 
     # fix initial positions issue
     if signals['signals1'].iloc[0] != 0:
@@ -119,3 +118,6 @@ df2 = data2df.csv2df(filename % ticker2 + '.csv')
 df2 = df2.astype(float)
 df1 = df1[-500:]
 df2 = df2[-500:]
+
+signals = signal_generation(df1, df2, cointegration)
+print(signals[['z', 'signals1', 'positions1', 'signals2', 'positions2']].tail(10))
