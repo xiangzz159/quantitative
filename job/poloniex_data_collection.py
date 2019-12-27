@@ -31,6 +31,8 @@ import time
 @return: DataFrame数据
 
 '''
+
+
 def get_poloniex_kline(symbol, begin, end, period):
     try:
         url = 'https://poloniex.com/public?command=returnChartData&currencyPair=%s&start=%d&end=%d&period=%d' % (
@@ -55,12 +57,23 @@ def get_poloniex_kline(symbol, begin, end, period):
     except BaseException as e:
         print(e)
 
-if __name__ == '__main__':
-    period = 300  # 300, 900, 1800, 7200, 14400, and 86400
-    end = 1516235700
-    begin = 1514736000
 
-    date = time.strftime("%Y-%m-%d", time.localtime(begin))
-    df = get_poloniex_kline('USDT_BTC', begin, end, period)
-    fileName = '../data/poloniex_5M.csv'
+if __name__ == '__main__':
+    timeframe = {
+        '5m': 300,
+        '15m': 900,
+        '30m': 1800,
+        '2H': 7200,
+        '4H': 14400,
+        '1d': 86400
+    }
+    period = '30m'
+    begin = 1546272000
+    end = 1576080000
+    symbol = 'USDT_BTC'
+    date1 = time.strftime("%Y-%m-%d", time.localtime(begin))
+    date2 = time.strftime("%Y-%m-%d", time.localtime(end))
+    df = get_poloniex_kline(symbol, begin, end, timeframe[period])
+
+    fileName = '../data/poloniex-%s-%s-%s-%s.csv' % (symbol, date1, date2, period)
     df.to_csv(fileName, index=None)
