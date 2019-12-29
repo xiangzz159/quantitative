@@ -18,13 +18,13 @@ import time
 import numpy as np
 import pandas as pd
 
-limit = 100
+limit = 500
 symbol = 'BTC/USD'
-periods = 60 * 1000 * 60
-begin = 1504195200000
+periods = 60 * 1000 * 5
+begin = 1533250800000
 end = int(time.time()) * 1000
 count = int((end - begin) / limit / periods)
-periods_str = '1h'
+periods_str = '5m'
 ex = ccxt.bitmex()
 klines = []
 for i in range(count):
@@ -46,4 +46,6 @@ for i in range(1, len(klines)):
 df = pd.DataFrame(data, columns=['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume'])
 df['Timestamp'] = df['Timestamp'] - periods
 df['Timestamp'] = df['Timestamp'] / 1000
-df.to_csv('/home/BitMEX-170901-191107-1H.csv', index=False)
+date1 = time.strftime("%Y-%m-%d", time.localtime(begin))
+date2 = time.strftime("%Y-%m-%d", time.localtime(end))
+df.to_csv('./BitMEX-%s-%s-%s-%s.csv' % (symbol, date1, date2, '5m'), index=False)

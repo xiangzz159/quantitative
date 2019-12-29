@@ -126,7 +126,7 @@ if __name__ == '__main__':
     import csv
     import pandas as pd
 
-    lines = list(csv.reader(open(r'../data/BitMEX-170901-190606-1H.csv')))
+    lines = list(csv.reader(open(r'../data/BitMEX-BTC-20180803-20190920-5m.csv')))
     header, values = lines[0], lines[1:]
     data_dict = {h: v for h, v in zip(header, zip(*values))}
     df = pd.DataFrame(data_dict)
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     # size = len(df)
     # df = df[size - 100:]
     l = df.values.tolist()
-    l_ = kline_fitting(l, 4, 60 * 60 * 4)
+    l_ = kline_fitting(l, 3, 900)
 
     df = pd.DataFrame(l_, columns=['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume'])
-    df.to_csv('../data/BitMEX-170901-190606-4H.csv', index=False)
+    df.to_csv('../data/BitMEX-BTC-20180803-20190920-15m.csv', index=False)

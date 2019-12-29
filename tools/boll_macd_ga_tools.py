@@ -1,5 +1,5 @@
 import numpy as np
-from tools.stockstats import StockDataFrame
+from stockstats import StockDataFrame
 import random
 import copy
 import pandas as pd

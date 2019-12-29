@@ -19,105 +19,137 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import statsmodels.api as sm
 from sklearn.model_selection import train_test_split
+from tools.BmBackTest import BmBackTest
 
 
 # 检查协整状态
-def cointegration(data1, data2):
+def analysis(data1, data2):
+    test_size = 0.7
+    limit_rate = 0.8
     # 分割样例测试数据 70%/30%
-    df1, test1, df2, test2 = train_test_split(data1, data2, test_size=0.7
+    df1, test1, df2, test2 = train_test_split(data1, data2, test_size=test_size
                                               , shuffle=False)
 
     train = pd.DataFrame()
     train['asset1'] = df1['Close']
     train['asset2'] = df2['Close']
 
-    # this is the part where we test the cointegration
-    # in this case, i use Engle-Granger two-step method
-    # which is invented by the mentor of my mentor!!!
-    # generally people use Johanssen test to check the cointegration status
-    # the first step for EG is to run a linear regression on both variables
-    # next, we do OLS and obtain the residual
-    # after that we run unit root test to check the existence of cointegration
-    # if it is stationary, we can determine its a drunk man with a dog
-    # the first step would be adding a constant vector to asset1
-
     x = sm.add_constant(train['asset1'])
     y = train['asset2']
     model = sm.OLS(y, x).fit()
-    resid = model.resid
 
-    # print(model.summary())
-    # print('\n', sm.tsa.stattools.adfuller(resid))
+    df = pd.DataFrame()
+    df['asset1'] = test1['Close']
+    df['asset2'] = test2['Close']
 
-    # this phrase is how we set the trigger conditions
-    # first we normalize the residual
-    # we would get a vector that follows standard normal distribution
-    # generally speaking, most tests use one sigma level as the threshold
-    # two sigma level reaches 95% which is relatively difficult to trigger
-    # after normalization, we should obtain a white noise follows N(0,1)
-    # we set +-1 as the threshold
-    # eventually we visualize the result
+    df['fitted'] = np.mat(sm.add_constant(df['asset2'])) * np.mat(model.params).reshape(2, 1)
 
-    signals = pd.DataFrame()
-    signals['asset1'] = test1['Close']
-    signals['asset2'] = test2['Close']
+    df['residual'] = df['asset1'] - df['fitted']
 
-    signals['fitted'] = np.mat(sm.add_constant(signals['asset2'])) * np.mat(model.params).reshape(2, 1)
-
-    signals['residual'] = signals['asset1'] - signals['fitted']
-
-    signals['z'] = (signals['residual'] - np.mean(signals['residual'])) / np.std(signals['residual'])
+    df['z'] = (df['residual'] - np.mean(df['residual'])) / np.std(df['residual'])
 
     # use z*0 to get panda series instead of an integer result
-    signals['z upper limit'] = signals['z'] * 0 + np.mean(signals['z']) + np.std(signals['z'])
-    signals['z lower limit'] = signals['z'] * 0 + np.mean(signals['z']) - np.std(signals['z'])
+    df['z upper limit'] = df['z'] * limit_rate + np.mean(df['z']) + np.std(df['z'])
+    df['z lower limit'] = df['z'] * limit_rate + np.mean(df['z']) - np.std(df['z'])
 
-    return signals
+    df['s'] = 0
+    df['s'] = np.select([df['z'] > df['z upper limit'], \
+                         df['z'] < df['z lower limit']], \
+                        [1, -1], default=0)
+    df['p'] = df['s'].diff()
+    df['s'] = df['p']
+    df['s'] = np.select([df['s'] > 0, df['s'] < 0], [1, -1], default=0)
 
+    # df['signal'] = 'wait'
+    # df['signal'] = np.where((df['s'] == 1) & (df['s'].shift(1) == 0), 'long', df['signal'])
+    # df['signal'] = np.where((df['s'] == -1) & (df['s'].shift(1) == 0), 'short', df['signal'])
+    # df['signal'] = np.where((df['s'] == 1) & (df['s'].shift(1) == -1), 'long', df['signal'])
+    # df['signal'] = np.where((df['s'] == -1) & (df['s'].shift(1) == 1), 'short', df['signal'])
+    # df['signal'] = np.where((df['s'] == 0) & (df['s'].shift(1) == -1), 'close_short', df['signal'])
+    # df['signal'] = np.where((df['s'] == 0) & (df['s'].shift(1) == 1), 'close_long', df['signal'])
 
-# In[2]:
-
-
-# the signal generation process is very straight forward
-# if the normalized residual gets above or below threshold
-# we long the bearish one and short the bullish one, vice versa
-# i only need to generate trading signal of one asset
-# the other one should be the opposite direction
-def signal_generation(df1, df2, method):
-    signals = method(df1, df2)
-
-    signals['signals1'] = 0
-
-    # as z statistics cannot exceed both upper and lower bounds at the same time
-    # this line holds
-    signals['signals1'] = np.select([signals['z'] > signals['z upper limit'], \
-                                     signals['z'] < signals['z lower limit']], \
-                                    [-1, 1], default=0)
+    return df
 
 
-    # signals only imply holding
-    # we take the first order difference to obtain the execution signal
-    signals['positions1'] = signals['signals1'].diff()
-    signals['signals2'] = -signals['signals1']
-    signals['positions2'] = signals['signals2'].diff()
-
-    # fix initial positions issue
-    if signals['signals1'].iloc[0] != 0:
-        signals['positions1'].iloc[0] = signals['signals1'].iloc[0]
-        signals['positions2'].iloc[0] = signals['signals2'].iloc[0]
-
-    return signals
-
-
-filename = 'poloniex-USDT_%s-2019-01-01-2019-12-12-30m'
-ticker1 = 'EOS'
+filename = 'BitMEX-%s-20180803-20190920-15m'
+ticker1 = 'BTC'
 ticker2 = 'ETH'
 df1 = data2df.csv2df(filename % ticker1 + '.csv')
 df1 = df1.astype(float)
 df2 = data2df.csv2df(filename % ticker2 + '.csv')
 df2 = df2.astype(float)
-df1 = df1[-500:]
-df2 = df2[-500:]
+backtest1 = BmBackTest({
+    'asset': 0.5
+})
+backtest2 = BmBackTest({
+    'asset': 0.5
+})
 
-signals = signal_generation(df1, df2, cointegration)
-print(signals[['z', 'signals1', 'positions1', 'signals2', 'positions2']].tail(10))
+level = 1
+
+start_idx = 500
+plt_data = []
+# for i in range(start_idx, len(df1)):
+#     test_df1 = df1[i - 500: i]
+#     test_df2 = df2[i - 500: i]
+#     re = analysis(test_df1, test_df2)
+#     # positions1==1 Long ticker1 Short ticker2
+#     # positions1==-1 Short ticker1 Long ticker2
+#     row = re.iloc[-1]
+#
+#     if row['signal'] in ['long', 'short']:
+#         min_asset = min(backtest1.asset, backtest2.asset)
+#         amount1 = int(min_asset * row['asset1'] * level)
+#         amount2 = int(min_asset * row['asset2'] * level)
+#         s1 = row['signal']
+#         s2 = 'short' if s1 == 'long' else 'short'
+#         backtest1.create_order(s1, 'market', row['asset1'], amount1)
+#         backtest2.create_order(s2, 'market', row['asset2'], amount2)
+#
+#     elif (row['signal'] == 'close_long' and backtest1.side == 'long') or (
+#             row['signal'] == 'close_short' and backtest1.side == 'short'):
+#         backtest1.close_positions(row['asset1'], 'market')
+#         backtest2.close_positions(row['asset2'], 'market')
+#     else:
+#         backtest1.add_data(row['asset1'])
+#         backtest2.add_data(row['asset2'])
+#
+#     print(i, round(row['asset1'], 4), round(row['asset2'], 4), row['signal'],
+#           round(backtest1.asset + backtest1.float_profit, 4),
+#           round(backtest2.asset + backtest2.float_profit, 4),
+#           round(backtest1.asset + backtest1.float_profit + backtest2.asset + backtest2.float_profit, 4))
+
+
+signals = {
+    -1: 'short',
+    0: 'wait',
+    1: 'long'
+}
+for i in range(start_idx, len(df1)):
+    test_df1 = df1[i - start_idx: i]
+    test_df2 = df2[i - start_idx: i]
+    re = analysis(test_df1, test_df2)
+    # positions1==1 Long ticker1 Short ticker2
+    # positions1==-1 Short ticker1 Long ticker2
+    row = re.iloc[-1]
+    s = int(row['s'])
+    if s != 0:
+        if (s == 1 and backtest1.side == 'short') or (s == -1 and backtest1.side == 'long'):
+            # close position
+            backtest1.close_positions(row['asset1'], 'market')
+            backtest2.close_positions(row['asset2'], 'market')
+        else:
+            if backtest1.side == 'wait':
+                min_asset = backtest1.asset + backtest2.asset
+                amount1 = int(min_asset * row['asset1'] * level)
+                amount2 = int(min_asset * row['asset2'] * level)
+                backtest1.create_order(signals[s], 'market', row['asset1'], amount1)
+                backtest2.create_order(signals[-1 * s], 'market', row['asset2'], amount2)
+    else:
+        backtest1.add_data(row['asset1'])
+        backtest2.add_data(row['asset2'])
+
+    print(i, round(row['asset1'], 4), round(row['asset2'], 4), signals[s],
+          round(backtest1.asset + backtest1.float_profit, 4),
+          round(backtest2.asset + backtest2.float_profit, 4),
+          round(backtest1.asset + backtest1.float_profit + backtest2.asset + backtest2.float_profit, 4))
