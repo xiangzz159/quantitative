@@ -37,10 +37,22 @@ def analysis(data1, data2):
     x = sm.add_constant(train['asset1'])
     y = train['asset2']
     model = sm.OLS(y, x).fit()
+    resid = model.resid
+    result = sm.tsa.stattools.adfuller(resid)
+    adf_test_result = result[0]
+    pvalue = result[1]
+    d = result[4]
+    p1 = d['1%']
+    p5 = d['5%']
+    p10 = d['10%']
 
     df = pd.DataFrame()
     df['asset1'] = test1['Close']
     df['asset2'] = test2['Close']
+    df['s'] = 0
+
+    if adf_test_result > p1 or adf_test_result > p5 or adf_test_result > p10 or pvalue > 0.01:
+        return df
 
     df['fitted'] = np.mat(sm.add_constant(df['asset2'])) * np.mat(model.params).reshape(2, 1)
 
@@ -52,7 +64,7 @@ def analysis(data1, data2):
     df['z upper limit'] = df['z'] * limit_rate + np.mean(df['z']) + np.std(df['z'])
     df['z lower limit'] = df['z'] * limit_rate + np.mean(df['z']) - np.std(df['z'])
 
-    df['s'] = 0
+
     df['s'] = np.select([df['z'] > df['z upper limit'], \
                          df['z'] < df['z lower limit']], \
                         [1, -1], default=0)
@@ -89,35 +101,6 @@ level = 1
 
 start_idx = 500
 plt_data = []
-# for i in range(start_idx, len(df1)):
-#     test_df1 = df1[i - 500: i]
-#     test_df2 = df2[i - 500: i]
-#     re = analysis(test_df1, test_df2)
-#     # positions1==1 Long ticker1 Short ticker2
-#     # positions1==-1 Short ticker1 Long ticker2
-#     row = re.iloc[-1]
-#
-#     if row['signal'] in ['long', 'short']:
-#         min_asset = min(backtest1.asset, backtest2.asset)
-#         amount1 = int(min_asset * row['asset1'] * level)
-#         amount2 = int(min_asset * row['asset2'] * level)
-#         s1 = row['signal']
-#         s2 = 'short' if s1 == 'long' else 'short'
-#         backtest1.create_order(s1, 'market', row['asset1'], amount1)
-#         backtest2.create_order(s2, 'market', row['asset2'], amount2)
-#
-#     elif (row['signal'] == 'close_long' and backtest1.side == 'long') or (
-#             row['signal'] == 'close_short' and backtest1.side == 'short'):
-#         backtest1.close_positions(row['asset1'], 'market')
-#         backtest2.close_positions(row['asset2'], 'market')
-#     else:
-#         backtest1.add_data(row['asset1'])
-#         backtest2.add_data(row['asset2'])
-#
-#     print(i, round(row['asset1'], 4), round(row['asset2'], 4), row['signal'],
-#           round(backtest1.asset + backtest1.float_profit, 4),
-#           round(backtest2.asset + backtest2.float_profit, 4),
-#           round(backtest1.asset + backtest1.float_profit + backtest2.asset + backtest2.float_profit, 4))
 
 
 signals = {
@@ -133,6 +116,7 @@ for i in range(start_idx, len(df1)):
     # positions1==-1 Short ticker1 Long ticker2
     row = re.iloc[-1]
     s = int(row['s'])
+
     if s != 0:
         if (s == 1 and backtest1.side == 'short') or (s == -1 and backtest1.side == 'long'):
             # close position
