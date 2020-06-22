@@ -42,7 +42,6 @@ def analysis(kline):
     df1 = heikin_ashi(df1)
     stls = 3
 
-    df1['signal'] = 0
     df1['signals'] = 0
 
     # i use cumulated sum to check how many positions i have longed
@@ -58,19 +57,19 @@ def analysis(kline):
                     df1['HA open'][n - 1] - df1['HA close'][n - 1]) and
                 df1['HA open'][n - 1] > df1['HA close'][n - 1]):
 
-            df1.at[n, 'signal'] = 1
-            df1['cumsum'] = df1['signal'].cumsum()
+            df1.at[n, 'signals'] = 1
+            df1['cumsum'] = df1['signals'].cumsum()
 
             # stop longing positions
             if df1['cumsum'][n] > stls:
-                df1.at[n, 'signal'] = 0
+                df1.at[n, 'signals'] = 0
 
 
         elif (df1['HA open'][n] < df1['HA close'][n] and df1['HA open'][n] == df1['HA low'][n] and
               df1['HA open'][n - 1] < df1['HA close'][n - 1]):
 
-            df1.at[n, 'signal'] = -1
-            df1['cumsum'] = df1['signal'].cumsum()
+            df1.at[n, 'signals'] = -1
+            df1['cumsum'] = df1['signals'].cumsum()
 
             # if long positions i hold are more than one
             # its time to clear all my positions
@@ -83,11 +82,9 @@ def analysis(kline):
                 df1.at[n, 'signals'] = 0
 
     df1['cumsums'] = df1['signals'].cumsum()
-
-    fileNames = '../data/HA.csv'
-    df1[['signal', 'signals', 'cumsum', 'cumsums']].to_csv(fileNames, index=None)
+    fileNames = '../data/HA1.csv'
+    df1[['signals', 'cumsums']].to_csv(fileNames, index=None)
     return df1.iloc[-1]
-
 
 
 # filename = 'BitMEX-ETH-180803-190817-4H'
@@ -111,7 +108,7 @@ analysis(datas)
 #     row = analysis(test_data)
 #     print(i, row['signals'], row['close'])
 #
-#     if row['signal'] in ['long', 'short']:
+#     if row['signals'] in ['long', 'short']:
 #         amount = int(backtest.asset * row['close'] * level)
 #         backtest.create_order(row['signal'], "market", row['close'], amount)
 #         # backtest.stop_price = row['%s_stop_price' % row['signal']]

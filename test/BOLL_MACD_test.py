@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
-from tools import data2df
-from tools.stockstats import StockDataFrame
-from tools import boll_macd_ga_tools
+from tools import data2df, boll_macd_ga_tools
+from stockstats import StockDataFrame
 import time
 
 
