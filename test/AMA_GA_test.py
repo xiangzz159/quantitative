@@ -30,6 +30,7 @@ def get_params(ori_df):
     best_individuals = []
     best_fits = []
     for j in range(iter):
+        print('The %dth GA cycle' % j)
         df = copy.deepcopy(ori_df)
         obj_values = ama_ga_tools.cal_fitness(df, pops, pop_size, chromosome_length)  # 计算绩效
         fit_values = ama_ga_tools.clear_fit_values(obj_values)
@@ -144,8 +145,8 @@ def get_signal(df, params):
     df['long_stop_price'] = df['close'] - df['atr'] * _stop_atr
     df['short_stop_price'] = df['close'] + df['atr'] * _stop_atr
     return df.iloc[-1]
-        
-    
+
+
 
 def analysis(kline):
     df = pd.DataFrame(kline, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
@@ -169,7 +170,7 @@ level = 1
 
 for i in range(370, len(df)):
     test_df = datas[i - 370: i]
-    row = analysis(test_df)
+    row, best_individual = analysis(test_df)
 
     if row['signal'] in ['long', 'short']:
         amount = int(backtest.asset * row['close'] * level)
@@ -184,7 +185,7 @@ for i in range(370, len(df)):
         backtest.add_data(row['close'], row['high'], row['low'])
 
     print(i, row['close'], row['signal'], backtest.open_price, backtest.side, backtest.asset, backtest.float_profit,
-          backtest.asset + backtest.float_profit)
+          backtest.asset + backtest.float_profit, best_individual)
 
-backtest.show("AMA")
+backtest.show("AMA GA")
 

@@ -31,6 +31,8 @@ import random
 import copy
 from datetime import datetime
 import asyncio
+from tools.BmBackTest import BmBackTest
+
 
 
 
@@ -223,6 +225,7 @@ def cal_fitness(df, pops, pop_size=50, chromosome_length=6):
         async_funcs.append(analyze(df_, stock, i, _wn_rate, _cci_w, _dir_w, _vola_w, _ama_std_w, _percentage, _atr_len, _stop_atr, _fastest, _slowest))
     loop = asyncio.get_event_loop()
     re = loop.run_until_complete(asyncio.gather(*async_funcs))
+    loop.close()
     n = len(re)
     for i in range(n - 1, 0, -1):
         for j in range(i):
@@ -230,9 +233,10 @@ def cal_fitness(df, pops, pop_size=50, chromosome_length=6):
                 re[j], re[j + 1] = re[j + 1], re[j]
     for i in range(n):
         obj_value.append(re[i][1])
+    print('Calculate fitness finshed!')
     return obj_value
 
-def analyze(df, stock, index, _wn_rate, _cci_w, _dir_w, _vola_w, _ama_std_w, _percentage, _atr_len, _stop_atr, _fastest, _slowest):
+async def analyze(df, stock, index, _wn_rate, _cci_w, _dir_w, _vola_w, _ama_std_w, _percentage, _atr_len, _stop_atr, _fastest, _slowest):
     data_len = len(df)
     _get_cci(df, stock, _cci_w)
 
@@ -330,64 +334,29 @@ def analyze(df, stock, index, _wn_rate, _cci_w, _dir_w, _vola_w, _ama_std_w, _pe
     df['long_stop_price'] = df['close'] - df['atr'] * _stop_atr
     df['short_stop_price'] = df['close'] + df['atr'] * _stop_atr
 
-    signal_df = df.loc[(df['signal'] != 'wait') & (df['signal'] != 'trend')]
-    if len(signal_df) == 0:
-        return 0.0, 0.0
-    if (signal_df[:1]['signal'] == 'close_long').bool() or (signal_df[:1]['signal'] == 'close_short').bool():
-        signal_df = signal_df[1:]
-    if (signal_df[-1:]['signal'] == 'long').bool() or (signal_df[-1:]['signal'] == 'short').bool():
-        signal_df = signal_df[:len(signal_df) - 1]
-    # 初始化
     df = df[-270:]
-    market_rate = 0.00075  # 市价单
-    market_yield_ = 0.0  # 记录连续亏损收益
-    total_yield = 0.0
-    max_drawdown = 0.0  # 最大回撤
-    i = 1
-    while i < len(signal_df):
-        md = 0
-        market_yield = 0.0
-        row_ = signal_df.iloc[i - 1]
-        row = signal_df.iloc[i]
-        if row['signal'] == 'close_long' and row_['signal'] == 'long':
-            market_yield = (row['close'] - row_['close']) / row['close'] - market_rate * 2
-            part_df = df.loc[(df['timestamp'] > row_['timestamp']) & (df['timestamp'] <= row['timestamp'])]
-            if len(part_df) == 0:
-                continue
-            min_price = min(part_df.low)
-            md = (row_['close'] - min_price) / row_['close']
-        elif row['signal'] == 'close_short' and row_['signal'] == 'short':
-            market_yield = (row_['close'] - row['close']) / row['close'] - market_rate * 2
-            part_df = df.loc[(df['timestamp'] > row_['timestamp']) & (df['timestamp'] <= row['timestamp'])]
-            if len(part_df) == 0:
-                continue
-            max_price = min(part_df.high)
-            md = (max_price - row_['close']) / row_['close']
-        elif row['signal'] == 'short' and row_['signal'] == 'long':
-            market_yield = (row['close'] - row_['close']) / row['close'] - market_rate * 2
-            part_df = df.loc[(df['timestamp'] > row_['timestamp']) & (df['timestamp'] <= row['timestamp'])]
-            if len(part_df) == 0:
-                continue
-            min_price = min(part_df.low)
-            md = (row_['close'] - min_price) / row_['close']
-            i -= 1
-        elif row['signal'] == 'long' and row_['signal'] == 'short':
-            market_yield = (row_['close'] - row['close']) / row['close'] - market_rate * 2
-            part_df = df.loc[(df['timestamp'] > row_['timestamp']) & (df['timestamp'] <= row['timestamp'])]
-            if len(part_df) == 0:
-                continue
-            max_price = min(part_df.high)
-            md = (max_price - row_['close']) / row_['close']
-            i -= 1
+    backtest = BmBackTest({
+        'asset': 1
+    })
+    for idx, row in df.iterrows():
+        if row['signal'] in ['long', 'short']:
+            amount = int(backtest.asset * row['close'])
+            backtest.create_order(row['signal'], "market", row['close'], amount)
+            # backtest.stop_price = row['%s_stop_price' % row['signal']]
 
-        if market_yield < 0:
-            md = max(md, md - market_yield_)
-            market_yield_ += market_yield
+        elif row['signal'] == 'trend' or (row['signal'] == 'close_long' and backtest.side == 'long') or (
+                row['signal'] == 'close_short' and backtest.side == 'short'):
+            backtest.close_positions(row['close'], 'market')
+
         else:
-            market_yield_ = 0.0
-        max_drawdown = max(md, max_drawdown)
-        total_yield += market_yield
-        i += 2
+            backtest.add_data(row['close'], row['high'], row['low'])
 
-    result = 0.5 * (max_drawdown - total_yield)
+    max_drawdown = 0.0
+    for i in range(len(backtest.data_arr)):
+        for j in range(i + 1, len(backtest.data_arr)):
+            ai = backtest.data_arr[i][0]
+            aj = backtest.data_arr[j][0]
+            max_drawdown = min(max_drawdown, aj / ai - 1)
+    result = 0.5 * (max_drawdown - backtest.data_arr[-1][0] - 1)
     return index, result
+
