@@ -17,7 +17,7 @@ import pandas as pd
 import numpy as np
 from tools import data2df
 import time
-from tools.stockstats import StockDataFrame
+from stockstats import StockDataFrame
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 

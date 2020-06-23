@@ -40,9 +40,8 @@ def heikin_ashi(df1):
 def analysis(kline):
     df1 = pd.DataFrame(kline, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
     df1 = heikin_ashi(df1)
-    stls = 3
+    stls = 2
 
-    df1['signal'] = 0
     df1['signals'] = 0
 
     # i use cumulated sum to check how many positions i have longed
@@ -50,80 +49,117 @@ def analysis(kline):
     # i also keep tracking how many long positions i have got
     # long signals cannot exceed the stop loss limit
     df1['cumsum'] = 0
+    df1['signals'] = np.where((df1['HA open'] > df1['HA close']) & (df1['HA open'] == df1['HA high']) &
+                              (abs(df1['HA open'] - df1['HA close']) > abs(
+                                  df1['HA open'].shift(1) - df1['HA close'].shift(1))) &
+                              (df1['HA open'].shift(1) > df1['HA close'].shift(1)), 1, 0)
+
+    df1['signals'] = np.where((df1['HA open'] < df1['HA close']) & (df1['HA open'] == df1['HA low']) &
+                              (df1['HA open'].shift(1) < df1['HA close'].shift(1)), -1, 0)
 
     for n in range(1, len(df1)):
 
         if (df1['HA open'][n] > df1['HA close'][n] and df1['HA open'][n] == df1['HA high'][n] and
-                np.abs(df1['HA open'][n] - df1['HA close'][n]) > np.abs(
+                np.abs(df1['HA open'][n] - df1['HA close'][n]) < np.abs(
                     df1['HA open'][n - 1] - df1['HA close'][n - 1]) and
                 df1['HA open'][n - 1] > df1['HA close'][n - 1]):
 
-            df1.at[n, 'signal'] = 1
-            df1['cumsum'] = df1['signal'].cumsum()
+            df1.at[n, 'signals'] = 1
+            df1['cumsum'] = df1['signals'].cumsum()
 
             # stop longing positions
             if df1['cumsum'][n] > stls:
-                df1.at[n, 'signal'] = 0
+                df1.at[n, 'signals'] = 0
 
 
         elif (df1['HA open'][n] < df1['HA close'][n] and df1['HA open'][n] == df1['HA low'][n] and
+              np.abs(df1['HA open'][n] - df1['HA close'][n]) < np.abs(
+                    df1['HA open'][n - 1] - df1['HA close'][n - 1]) and
               df1['HA open'][n - 1] < df1['HA close'][n - 1]):
 
-            df1.at[n, 'signal'] = -1
-            df1['cumsum'] = df1['signal'].cumsum()
+            df1.at[n, 'signals'] = -1
+            df1['cumsum'] = df1['signals'].cumsum()
 
-            # if long positions i hold are more than one
-            # its time to clear all my positions
-            # if there are no long positions in my portfolio
-            # ignore the exit signal
-            if df1['cumsum'][n] > 0:
-                df1.at[n, 'signals'] = -1 * (df1['cumsum'][n - 1])
-
-            if df1['cumsum'][n] < 0:
+            # stop shorting positions
+            if df1['cumsum'][n] < -stls:
                 df1.at[n, 'signals'] = 0
 
     df1['cumsums'] = df1['signals'].cumsum()
 
-    fileNames = '../data/HA.csv'
-    df1[['signal', 'signals', 'cumsum', 'cumsums']].to_csv(fileNames, index=None)
+    # df1['signal'] = 'wait'
+    # df1['signal'] = np.where((df1['cumsums'] > 0) & (df1['cumsums'] - df1['cumsums'].shift(1) == 1), 'long',
+    #                          df1['signal'])
+    # df1['signal'] = np.where((df1['cumsums'] == 0) & (df1['cumsums'].shift(1) > 0), 'close_long', df1['signal'])
+    # df1['signal'] = np.where((df1['cumsums'] < 0) & (df1['cumsums'] - df1['cumsums'].shift(1) == -1), 'short',
+    #                          df1['signal'])
+    # df1['signal'] = np.where((df1['cumsums'] == 0) & (df1['cumsums'].shift(1) < 0), 'close_short', df1['signal'])
+
+    # fileNames = '../data/HA2.csv'
+    # df1[['close', 'signals']].to_csv(fileNames, index=None)
     return df1.iloc[-1]
 
 
-
 # filename = 'BitMEX-ETH-180803-190817-4H'
-filename = 'BitMEX-170901-191107-4H'
+filename = 'BitMEX-170901-190606-1H'
 # filename='BitMEX-170901-190606-4H'
-df = data2df.csv2df(filename + '.csv')
-df = df.astype(float)
+df1 = data2df.csv2df(filename + '.csv')
+df1 = df1.astype(float)
 
-datas = df.values
+datas = df1.values
 
 backtest = BmBackTest({
     'asset': 1
 })
 
-level = 1
+level = 0.33333
+cumsums = 0
+order_amts = []
+for i in range(510, len(df1)):
+    test_data = datas[i - 500: i]
+    row = analysis(test_data)
 
-analysis(datas)
+    if row['cumsums'] != 0:
+        if abs(row['cumsums']) > abs(cumsums):
+            side = 'long' if row['cumsums'] > 0 else 'short'
+            if backtest.side == 'wait':
+                # create order
+                amount = 0
+                for j in range(int(abs(row['cumsums']))):
+                    amt = int(backtest.asset * row['close'] * level)
+                    amount += amt
+                    order_amts.append(amt)
+                backtest.create_order(side, "market", row['close'], amount)
+            elif backtest.side == 'long' and row['cumsums'] > cumsums and backtest.open_price > row['close'] and len(
+                    order_amts) < abs(row['cumsums']):
+                # add long positions
+                amount = int((backtest.asset + backtest.float_profit) * row['close'] * level)
+                backtest.create_order(side, "market", row['close'], amount)
+                order_amts.append(amount)
+            elif backtest.side == 'short' and row['cumsums'] < cumsums and backtest.open_price < row['close'] and len(
+                    order_amts) < abs(row['cumsums']):
+                # add short positions
+                amount = int((backtest.asset + backtest.float_profit) * row['close'] * level)
+                backtest.create_order(side, "market", row['close'], amount)
+                order_amts.append(amount)
 
-# for i in range(370, len(df)):
-#     test_data = datas[i - 370: i]
-#     row = analysis(test_data)
-#     print(i, row['signals'], row['close'])
-#
-#     if row['signal'] in ['long', 'short']:
-#         amount = int(backtest.asset * row['close'] * level)
-#         backtest.create_order(row['signal'], "market", row['close'], amount)
-#         # backtest.stop_price = row['%s_stop_price' % row['signal']]
-#
-#     elif (row['signal'] == 'close_long' and backtest.side == 'long') or (
-#             row['signal'] == 'close_short' and backtest.side == 'short'):
-#         backtest.close_positions(row['close'], 'market')
-#
-#     else:
-#         backtest.add_data(row['close'], row['high'], row['low'])
-#
-#     print(i, row['close'], row['signal'], backtest.open_price, backtest.side, backtest.asset, backtest.float_profit,
-#           backtest.asset + backtest.float_profit)
-#
-# backtest.show("HeikinAshi")
+        elif row['cumsums'] == cumsums:
+            backtest.add_data(row['close'], row['high'], row['low'])
+        else:
+            times = int(abs(cumsums - row['cumsums']))
+            amount = 0
+            for idx in range(times):
+                amount += order_amts.pop()
+            backtest.close_positions(row['close'], 'market', amount)
+    else:
+        if backtest.side != 'wait':
+            backtest.close_positions(row['close'], 'market')
+            order_amts = []
+        else:
+            backtest.add_data(row['close'], row['high'], row['low'])
+
+    cumsums = row['cumsums']
+    print(i, row['close'], row['cumsums'], backtest.open_price, order_amts, backtest.side, backtest.asset,
+          backtest.float_profit,
+          backtest.asset + backtest.float_profit)
+
+backtest.show("HeikinAshi")

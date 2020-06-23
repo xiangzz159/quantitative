@@ -14,7 +14,7 @@
 '''
 
 from tools import data2df
-from tools.stockstats import StockDataFrame
+from stockstats import StockDataFrame
 import numpy as np
 import pandas as pd
 from tools.BmBackTest import BmBackTest
@@ -47,7 +47,6 @@ def analysis(datas):
 
 filename = 'BitMEX-170901-190606-4H'
 df = data2df.csv2df(filename + '.csv')
-df = df.astype(float)
 df = df.astype(float)
 
 datas = df.values

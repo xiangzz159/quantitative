@@ -20,9 +20,10 @@ import matplotlib.pyplot as plt
 import random
 from datetime import datetime
 
+
 class BmBackTest(object):
     asset = 0  # 资产
-    float_profit = 0    # 浮动盈亏
+    float_profit = 0  # 浮动盈亏
     open_price = 0  # 开仓价格
     open_amount = 0  # 开仓数量
     open_qty = 0  # 开仓价值（BTC）
@@ -70,7 +71,36 @@ class BmBackTest(object):
 
         self.add_plt_data(self.asset + self.float_profit, price)
 
-    def close_positions(self, price, order_type):
+    def close_positions(self, price, order_type, amount=None):
+        if amount:
+            self.__close_part_positions(price, order_type, amount)
+        else:
+            self.__close_all_positions(price, order_type)
+
+    def __close_part_positions(self, price, order_type, amount):
+        if self.side != 'wait':
+            amount = amount if amount else self.open_amount
+            close_qty = amount / price
+            close_fee = 0
+            if order_type == 'market':
+                close_fee = close_qty * self.market_rate
+            else:
+                close_fee = close_qty * self.limit_rate
+
+            self.asset -= close_fee
+            open_qty = self.open_qty * amount / self.open_amount
+            profit = open_qty - close_qty if self.side == 'long' else close_qty - open_qty
+            self.asset += profit
+            # init
+            self.open_qty = self.open_qty - self.open_qty * amount / self.open_amount
+            self.open_amount -= amount  # 开仓数量
+            self.open_price = 0 if self.open_amount == 0 else self.open_price  # 开仓价格
+            self.stop_price = 0 if self.open_amount == 0 else self.stop_price
+            self.side = 'wait' if self.open_amount == 0 else self.side
+            self.float_profit = 0 if self.open_amount == 0 else self.open_amount / self.open_price - self.open_qty
+        self.add_plt_data(self.asset + self.float_profit, price)
+
+    def __close_all_positions(self, price, order_type):
         if self.side != 'wait':
             close_qty = self.open_amount / price
             close_fee = 0
@@ -93,7 +123,8 @@ class BmBackTest(object):
 
     def add_data(self, price, high=None, low=None):
         if self.side != 'wait' and self.stop_price > 0:
-            if (self.side == 'long' and low and self.stop_price > low) or (self.side == 'short' and high and self.stop_price < high):
+            if (self.side == 'long' and low and self.stop_price > low) or (
+                    self.side == 'short' and high and self.stop_price < high):
                 self.close_positions(self.stop_price, 'market')
                 return
 
@@ -122,8 +153,7 @@ class BmBackTest(object):
         ax[0].set_title(title)
         plt.show()
 
-
-    def real_time_show(self, title = 'Back Test'):
+    def real_time_show(self, title='Back Test'):
         # 动态实时绘图：
         # https://blog.csdn.net/u013950379/article/details/87936999
         ax = []  # 保存图1数据
