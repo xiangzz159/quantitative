@@ -15,12 +15,13 @@
 
 import pandas as pd
 import numpy as np
-from tools import data2df, ama_ga_tools
+from tools import data2df, ama_ga_tools, public_tools
 from stockstats import StockDataFrame
 from tools.BmBackTest import BmBackTest
 import copy
 
-def get_params(ori_df):
+# @public_tools.fn_timer
+def get_params(kline):
     pop_size, chromosome_length = 30, 6
     pops = ama_ga_tools.init_pops(pop_size, chromosome_length)
     iter = 10
@@ -30,9 +31,7 @@ def get_params(ori_df):
     best_individuals = []
     best_fits = []
     for j in range(iter):
-        print('The %dth GA cycle' % j)
-        df = copy.deepcopy(ori_df)
-        obj_values = ama_ga_tools.cal_fitness(df, pops, pop_size, chromosome_length)  # 计算绩效
+        obj_values = ama_ga_tools.cal_fitness(kline, pops, pop_size, chromosome_length)  # 计算绩效
         fit_values = ama_ga_tools.clear_fit_values(obj_values)
         best_individual, best_fit = ama_ga_tools.find_best(pops, fit_values,
                                                                  chromosome_length)  # 第一个是最优基因序列, 第二个是对应的最佳个体适度
@@ -46,7 +45,8 @@ def get_params(ori_df):
     best_fit_idx = best_fits.index(best_fit)
     return best_individuals[best_fit_idx]
 
-def get_signal(df, params):
+def get_signal(kline, params):
+    df = pd.DataFrame(kline, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
     data_len = len(df)
     stock = StockDataFrame.retype(df)
     _wn_rate, _cci_w, _dir_w, _vola_w, _ama_std_w, _percentage, _atr_len, _stop_atr, _fastest, _slowest = params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9]
@@ -149,9 +149,8 @@ def get_signal(df, params):
 
 
 def analysis(kline):
-    df = pd.DataFrame(kline, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
-    best_individual = get_params(df)
-    last_row = get_signal(df, best_individual)
+    best_individual = get_params(kline)
+    last_row = get_signal(kline, best_individual)
     return last_row, best_individual
 
 # filename = 'BitMEX-ETH-180803-190817-4H'

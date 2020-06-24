@@ -26,14 +26,13 @@ import pandas as pd
 import numpy as np
 import heapq
 from stockstats import StockDataFrame
-from stockstats import StockDataFrame
 import random
 import copy
 from datetime import datetime
 import asyncio
 from tools.BmBackTest import BmBackTest
-
-
+from memory_profiler import profile
+import time
 
 
 def _get_cci(df, stock, cci_w):
@@ -65,11 +64,13 @@ def wave_guess(arr, wn_rate):
 
     return wave_crest_x, wave_base_x
 
+
 # 初始化种群pop_size：种群数量，chromsome_length：基因长度
 def init_population(pop_size, chromosome_length):
     # 形如[[0,1,..0,1],[0,1,..0,1]...]
     pop = [[random.randint(0, 1) for i in range(chromosome_length)] for j in range(pop_size)]
     return pop
+
 
 # 计算2进制序列代表的数值
 def binary2decimal(binary, lower_limit, upper_limit, chromosome_length):
@@ -78,6 +79,7 @@ def binary2decimal(binary, lower_limit, upper_limit, chromosome_length):
         t += binary[j] * 2 ** j
     t = lower_limit + t * (upper_limit - lower_limit) / (2 ** chromosome_length - 1)
     return t
+
 
 # 初始化种群
 def init_pops(pop_size=50, chromosome_length=6):
@@ -93,6 +95,7 @@ def init_pops(pop_size=50, chromosome_length=6):
     slowest = init_population(pop_size, chromosome_length)
     return [wn_rate, cci_w, dir_w, vola_w, ama_std_w, percentage, atr_len, stop_atr, fastest, slowest]
 
+
 # 淘汰
 def clear_fit_values(obj_values):
     fit_value = []
@@ -105,6 +108,7 @@ def clear_fit_values(obj_values):
         fit_value.append(temp)
     # fit_value保存的是活下来的值
     return fit_value
+
 
 # 轮赌法选择
 def selection(pops, fit_value):
@@ -143,6 +147,7 @@ def selection(pops, fit_value):
     # 之前是看另一个人的程序，感觉他这里有点bug，要适当修改
     pops = newpop[:][:]
 
+
 # 计算累计概率
 def cum_sum(fit_value):
     # 输入[1, 2, 3, 4, 5]，返回[1,3,6,10,15]，matlab的一个函数
@@ -150,6 +155,7 @@ def cum_sum(fit_value):
     temp = fit_value[:]
     for i in range(len(temp)):
         fit_value[i] = (sum(temp[:i + 1]))
+
 
 # 杂交
 def crossover(pops, pc):
@@ -170,6 +176,7 @@ def crossover(pops, pc):
                 pops[j][i] = temp1[:]
                 pops[j][i + 1] = temp2[:]
 
+
 # 基因突变
 def mutation(pops, pm):
     px = len(pops[0])
@@ -183,6 +190,7 @@ def mutation(pops, pm):
                     pops[j][i][mpoint] = 0
                 else:
                     pops[j][i][mpoint] = 1
+
 
 # 找出最优解和最优解的基因编码
 def find_best(pops, fit_values, chromosome_length=6):
@@ -201,31 +209,37 @@ def find_best(pops, fit_values, chromosome_length=6):
     _slowest = binary2decimal(pops[9][best_fit_idx], 0.03, 0.1, chromosome_length)
 
     # 用来存最优基因编码
-    best_individual = [_wn_rate, _cci_w, _dir_w, _vola_w, _ama_std_w, _percentage, _atr_len, _stop_atr, _fastest, _slowest]
+    best_individual = [_wn_rate, _cci_w, _dir_w, _vola_w, _ama_std_w, _percentage, _atr_len, _stop_atr, _fastest,
+                       _slowest]
     return best_individual, best_fit
 
 
-def cal_fitness(df, pops, pop_size=50, chromosome_length=6):
+
+# @profile()
+def cal_fitness(kline, pops, pop_size=50, chromosome_length=6):
     obj_value = []
     async_funcs = []
+    re = []
     for i in range(pop_size):
-        df_ = copy.deepcopy(df)
-        stock = StockDataFrame.retype(df_)
-        df_['signal'] = 'wait'
-        _wn_rate = binary2decimal(pops[0][i], 0.03, 0.09, chromosome_length)
-        _cci_w = int(binary2decimal(pops[1][i], 17, 27, chromosome_length))
-        _dir_w = int(binary2decimal(pops[2][i], 10, 30, chromosome_length))
-        _vola_w = int(binary2decimal(pops[3][i], 10, 30, chromosome_length))
-        _ama_std_w = int(binary2decimal(pops[4][i], 10, 30, chromosome_length))
+        df = pd.DataFrame(kline, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+        stock = StockDataFrame.retype(df)
+        df['signal'] = 'wait'
+        _wn_rate = binary2decimal(pops[0][i], 0.03, 0.1, chromosome_length)
+        _cci_w = int(binary2decimal(pops[1][i], 17, 35, chromosome_length))
+        _dir_w = int(binary2decimal(pops[2][i], 10, 35, chromosome_length))
+        _vola_w = int(binary2decimal(pops[3][i], 10, 35, chromosome_length))
+        _ama_std_w = int(binary2decimal(pops[4][i], 10, 35, chromosome_length))
         _percentage = binary2decimal(pops[5][i], 0.05, 0.2, chromosome_length)
-        _atr_len = int(binary2decimal(pops[6][i], 10, 30, chromosome_length))
+        _atr_len = int(binary2decimal(pops[6][i], 10, 35, chromosome_length))
         _stop_atr = binary2decimal(pops[7][i], 1, 2, chromosome_length)
         _fastest = binary2decimal(pops[8][i], 0.3, 1, chromosome_length)
-        _slowest = binary2decimal(pops[9][i], 0.03, 0.1, chromosome_length)
-        async_funcs.append(analyze(df_, stock, i, _wn_rate, _cci_w, _dir_w, _vola_w, _ama_std_w, _percentage, _atr_len, _stop_atr, _fastest, _slowest))
+        _slowest = binary2decimal(pops[9][i], 0.02, 0.1, chromosome_length)
+        # index, result = analyze(df, stock, i, _wn_rate, _cci_w, _dir_w, _vola_w, _ama_std_w, _percentage, _atr_len, _stop_atr, _fastest, _slowest)
+        # re.append([index, result])
+        async_funcs.append(analyze(df, stock, i, _wn_rate, _cci_w, _dir_w, _vola_w, _ama_std_w, _percentage, _atr_len, _stop_atr, _fastest, _slowest))
     loop = asyncio.get_event_loop()
     re = loop.run_until_complete(asyncio.gather(*async_funcs))
-    loop.close()
+
     n = len(re)
     for i in range(n - 1, 0, -1):
         for j in range(i):
@@ -233,10 +247,12 @@ def cal_fitness(df, pops, pop_size=50, chromosome_length=6):
                 re[j], re[j + 1] = re[j + 1], re[j]
     for i in range(n):
         obj_value.append(re[i][1])
-    print('Calculate fitness finshed!')
     return obj_value
 
-async def analyze(df, stock, index, _wn_rate, _cci_w, _dir_w, _vola_w, _ama_std_w, _percentage, _atr_len, _stop_atr, _fastest, _slowest):
+
+# @profile()
+async def analyze(df, stock, index, _wn_rate, _cci_w, _dir_w, _vola_w, _ama_std_w, _percentage, _atr_len, _stop_atr, _fastest,
+            _slowest):
     data_len = len(df)
     _get_cci(df, stock, _cci_w)
 
@@ -270,7 +286,6 @@ async def analyze(df, stock, index, _wn_rate, _cci_w, _dir_w, _vola_w, _ama_std_
     df['tr'] = np.where(df['tr'] >= abs(df['low'] - df['close'].shift(1)), df['tr'],
                         abs(df['low'] - df['close'].shift(1)))
     df['atr'] = df['tr'].rolling(window=_atr_len, center=False).mean()
-
 
     df['wave'] = 0
     data_len_ = len(df)
@@ -338,6 +353,7 @@ async def analyze(df, stock, index, _wn_rate, _cci_w, _dir_w, _vola_w, _ama_std_
     backtest = BmBackTest({
         'asset': 1
     })
+    backtest.data_arr = []
     for idx, row in df.iterrows():
         if row['signal'] in ['long', 'short']:
             amount = int(backtest.asset * row['close'])
@@ -357,6 +373,6 @@ async def analyze(df, stock, index, _wn_rate, _cci_w, _dir_w, _vola_w, _ama_std_
             ai = backtest.data_arr[i][0]
             aj = backtest.data_arr[j][0]
             max_drawdown = min(max_drawdown, aj / ai - 1)
-    result = 0.5 * (max_drawdown - backtest.data_arr[-1][0] - 1)
-    return index, result
+    result = 0.5 * (abs(max_drawdown) - backtest.data_arr[-1][0] + 1)
 
+    return index, result
