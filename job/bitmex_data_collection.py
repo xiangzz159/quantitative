@@ -46,6 +46,6 @@ for i in range(1, len(klines)):
 df = pd.DataFrame(data, columns=['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume'])
 df['Timestamp'] = df['Timestamp'] - periods
 df['Timestamp'] = df['Timestamp'] / 1000
-date1 = time.strftime("%Y-%m-%d", time.localtime(begin))
-date2 = time.strftime("%Y-%m-%d", time.localtime(end))
+date1 = time.strftime("%Y-%m-%d", time.localtime(begin / 1000))
+date2 = time.strftime("%Y-%m-%d", time.localtime(end / 2000))
 df.to_csv('./BitMEX-%s-%s-%s-%s.csv' % (symbol, date1, date2, '5m'), index=False)
