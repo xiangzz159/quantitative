@@ -126,15 +126,16 @@ if __name__ == '__main__':
     import csv
     import pandas as pd
 
-    lines = list(csv.reader(open(r'../data/BitMEX-190526-200620-1h.csv')))
+    lines = list(csv.reader(open(r'../data/BitMEX-ETHUSD-190603-200612-1h.csv')))
     header, values = lines[0], lines[1:]
     data_dict = {h: v for h, v in zip(header, zip(*values))}
     df = pd.DataFrame(data_dict)
     df = df.astype(float)
+    df['Timestamp'] = df['Timestamp'] + 3600
     # size = len(df)
     # df = df[size - 100:]
     l = df.values.tolist()
     l_ = kline_fitting_1H_4H(l)
 
     df = pd.DataFrame(l_, columns=['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume'])
-    df.to_csv('../data/BitMEX-190526-200620-4h.csv', index=False)
+    df.to_csv('../data/BitMEX-ETHUSD-190603-200612-4h.csv', index=False)
